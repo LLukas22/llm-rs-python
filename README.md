@@ -1,2 +1,2 @@
 # llama-rs-python
-Unofficial pytohn bindings for llama-rs. 🐍🦀
+Unofficial python bindings for llama-rs. 🐍🦀
