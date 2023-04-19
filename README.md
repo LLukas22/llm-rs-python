@@ -22,15 +22,16 @@ from llama_rs_python import Model
 model = Model("path/to/model.bin")
 
 #generate
-print(model.generate("The meaning of life is").text)
+print(model.generate("The meaning of life is"))
 ```
 
 The package also supports callbacks to get each token as it is generated.
 The callback-function also supports canceling the generation by returning a `True` value from the pytohn side.
 
 ```python 
-import sys
 from llama_rs_python import Model
+import sys
+from typing import Optional
 
 #load the model
 model = Model("path/to/model.bin")
@@ -54,9 +55,20 @@ from llama_rs_python import Model, GenerationConfig
 model = Model("path/to/model.bin")
 
 #create a config
-config = GenerationConfig(top_p=0.9)
+config = GenerationConfig(top_p=0.9,seed=1441,max_new_tokens=1024)
 
 #generate
-print(model.generate("The meaning of life is",generation_config=config).text)
+print(model.generate("The meaning of life is",generation_config=config))
 ```
 
+To configure model specific settings the `SessionConfig` class can be used.
+
+```python
+from llama_rs_python import Model, SessionConfig
+
+#define the session
+session_config = SessionConfig(threads=8,context_length=512)
+
+#load the model
+model = Model("path/to/model.bin",session_config=session_config)
+```

@@ -4,12 +4,22 @@ build-backend = "maturin"
 
 [project]
 name = "llama-rs-python"
+authors = [
+  { name="Lukas Kreussel"},
+]
+description = "Unofficial python bindings for llama-rs. 🐍❤️🦀"
 requires-python = ">=3.7"
 classifiers = [
     "Programming Language :: Rust",
     "Programming Language :: Python :: Implementation :: CPython",
     "Programming Language :: Python :: Implementation :: PyPy",
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
 ]
+
+[project.urls]
+"Homepage" = "https://github.com/LLukas22/llama-rs-python"
+"Bug Tracker" = "https://github.com/LLukas22/llama-rs-python/issues"
 
 
 [tool.maturin]
