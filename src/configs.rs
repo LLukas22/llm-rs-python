@@ -54,7 +54,6 @@ impl GenerationConfig{
             temperature: self.temperature,
             repeat_penalty: self.repetition_penalty,
             bias_tokens: TokenBias::default(),
-            play_back_previous_tokens: false,
             n_threads: n_threads,
             n_batch: n_batch,
         }

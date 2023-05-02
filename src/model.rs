@@ -1,6 +1,8 @@
 use pyo3::prelude::*;
 
-use llama_rs::{InferenceError, TokenUtf8Buffer};
+use llm_base::load_progress_callback_stdout;
+use llm::{InferenceError, TokenUtf8Buffer,KnownModel,};
+use llm::models::{Llama};
 use pyo3::exceptions::PyException;
 use pyo3::types::{PyTuple};
 
@@ -9,11 +11,11 @@ use rand_chacha::ChaCha8Rng;
 
 use crate::configs;
 use crate::results;
-use crate::logging_utils;
+use std::path::Path;
 
 #[pyclass]
 pub struct Model {
-    model: llama_rs::Model,
+    model: Llama,
     #[pyo3(get, set)]
     config: configs::SessionConfig,
     #[pyo3(get, set)]
@@ -21,9 +23,6 @@ pub struct Model {
     #[pyo3(get)]
     path: String,
 }
-
-//Ok im not even pretending to know what this does
-unsafe impl Send for Model {}
 
 #[pymethods]
 impl Model {
@@ -36,16 +35,18 @@ impl Model {
         let default_config = configs::SessionConfig::default();
         let config_to_use = session_config.unwrap_or(default_config);
 
+        let path = Path::new(&path);
         //Load the model
-        let model = llama_rs::Model::load(
+        let model = Llama::load(
             &path,
+            true,
             config_to_use.context_length,
             |load_progress| {
             if should_log{
-                logging_utils::log_load_progress(load_progress)
+                load_progress_callback_stdout(load_progress)
             }
         }).unwrap();
-        Model { model: model, config:config_to_use, verbose: should_log, path:path }
+        Model { model: model, config:config_to_use, verbose: should_log, path:path.to_str().unwrap().to_string() }
     } 
 
     fn generate(

@@ -1,11 +1,11 @@
 [package]
-name = "llm-rs-python"
-version = "0.0.2"
+name = "llm-rs"
+version = "0.1.0"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 [lib]
-name = "llm_rs_python"
+name = "llm_rs"
 crate-type = ["cdylib"]
 
 [dependencies]
@@ -14,3 +14,4 @@ rand = "0.8.5"
 rand_chacha = "0.3.1"
 log  =  "0.4.17"
 llm = { git = "https://github.com/rustformers/llm.git" }
+llm-base = { git = "https://github.com/rustformers/llm.git" }
