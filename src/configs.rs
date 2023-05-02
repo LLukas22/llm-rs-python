@@ -1,5 +1,5 @@
 use pyo3::prelude::*;
-use llama_rs::{InferenceParameters,ModelKVMemoryType,TokenBias,InferenceSessionParameters};
+use llm::{InferenceParameters,ModelKVMemoryType,TokenBias,InferenceSessionParameters};
 
 #[pyclass]
 pub struct GenerationConfig {

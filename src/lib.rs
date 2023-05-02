@@ -7,7 +7,7 @@ mod model;
 
 /// A Python module implemented in Rust.
 #[pymodule]
-fn llama_rs_python(_py: Python, m: &PyModule) -> PyResult<()> {
+fn llm_rs_python(_py: Python, m: &PyModule) -> PyResult<()> {
 
     m.add_class::<model::Model>()?;
 

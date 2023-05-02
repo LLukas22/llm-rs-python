@@ -1,4 +1,4 @@
-from llama_rs_python import Model,SessionConfig,Precision,GenerationConfig
+from llm_rs_python import Model,SessionConfig,Precision,GenerationConfig
 from typing import Optional
 import sys 
 
