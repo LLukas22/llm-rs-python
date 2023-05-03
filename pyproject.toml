@@ -18,8 +18,8 @@ classifiers = [
 ]
 
 [project.urls]
-"Homepage" = "https://github.com/LLukas22/llama-rs-python"
-"Bug Tracker" = "https://github.com/LLukas22/llama-rs-python/issues"
+"Homepage" = "https://github.com/LLukas22/llm-rs-python"
+"Bug Tracker" = "https://github.com/LLukas22/llm-rs-python/issues"
 
 
 [tool.maturin]
