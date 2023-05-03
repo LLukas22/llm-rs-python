@@ -2,55 +2,16 @@ use pyo3::prelude::*;
 use pyo3::exceptions::PyException;
 use pyo3::types::{PyTuple};
 
-use llm::{InferenceError, TokenUtf8Buffer,KnownModel};
-use llm_base::{load_progress_callback_stdout,load, LoadError};
+use llm::{InferenceError, TokenUtf8Buffer};
+
 
 use rand_chacha::ChaCha8Rng;
 use rand::prelude::*;
 
-use std::path::Path;
-
 use crate::configs;
 use crate::results;
 
-#[pyclass]
-pub struct InternalModel
-{
-    #[pyo3(get,set)]
-    pub config: configs::SessionConfig,
-    #[pyo3(get)]
-    pub verbose: bool,
-    #[pyo3(get)]
-    pub path: String,
-    pub llm_model: Box<dyn llm::Model>
-}
-
-
-pub fn _load<M: KnownModel + 'static>(path: String, session_config:Option<configs::SessionConfig>,verbose:Option<bool>) -> Result<InternalModel, LoadError>{
-    let should_log = verbose.unwrap_or(false);
-
-    //Build the correct session parameters
-    let default_config = configs::SessionConfig::default();
-    let config_to_use = session_config.unwrap_or(default_config);
-
-    let path = Path::new(&path);
-    
-    let llm_model: M = load(
-        &path,
-        config_to_use.prefer_mmap,
-        config_to_use.context_length,
-        |load_progress| {
-        if should_log{
-            load_progress_callback_stdout(load_progress)
-        }
-    }).unwrap();
-
-    Ok(InternalModel{llm_model: Box::new(llm_model), config:config_to_use, verbose: should_log, path:path.to_str().unwrap().to_string()})
-}
-
-pub trait Inferenze{
-
-    fn _generate(&self,
+pub fn _generate(
         _py: Python,
         model: & dyn llm::Model,
         session_config: &configs::SessionConfig,
@@ -145,6 +106,68 @@ pub trait Inferenze{
                 };
     
             Ok(result)
+}
+
+   
+
+
+
+macro_rules! wrap_model {
+    ($name:ident,$llm_model:ty) => {
+        #[pyclass]
+        pub struct $name {
+
+            #[pyo3(get,set)]
+            pub config: crate::configs::SessionConfig,
+            #[pyo3(get)]
+            pub verbose: bool,
+            #[pyo3(get)]
+            pub path: String,
+            pub llm_model: Box<dyn llm::Model>
         }
 
-}   
+        #[pymethods]
+        impl $name {
+            
+            #[new]
+            fn new(path: String, session_config:Option<crate::configs::SessionConfig>,verbose:Option<bool>) -> Self {                
+                let should_log = verbose.unwrap_or(false);
+
+                //Build the correct session parameters
+                let default_config = crate::configs::SessionConfig::default();
+                let config_to_use = session_config.unwrap_or(default_config);
+            
+                let path = std::path::Path::new(&path);
+                
+                let llm_model: $llm_model = llm_base::load(
+                    &path,
+                    config_to_use.prefer_mmap,
+                    config_to_use.context_length,
+                    |load_progress| {
+                    if should_log{
+                        llm_base::load_progress_callback_stdout(load_progress)
+                    }
+                }).unwrap();
+
+                
+                $name { config: config_to_use,verbose: should_log,path: path.to_str().unwrap().to_string(),llm_model:Box::new(llm_model) }
+            } 
+
+            fn generate(
+                &self,
+                _py: Python,
+                prompt: String,
+                generation_config: Option<&crate::configs::GenerationConfig>,
+                callback: Option<PyObject>,
+            ) -> PyResult<crate::results::GenerationResult> {
+
+                return crate::model_base::_generate(_py,self.llm_model.as_ref(),&self.config,prompt, generation_config, callback);
+            }
+        }
+
+
+        };
+}
+
+
+pub(crate) use wrap_model;

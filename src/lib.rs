@@ -5,9 +5,6 @@ mod results;
 mod models;
 mod model_base;
 
-
-
-
 #[pymodule]
 fn llm_rs(_py: Python, m: &PyModule) -> PyResult<()> {
 
@@ -23,11 +20,15 @@ fn llm_rs(_py: Python, m: &PyModule) -> PyResult<()> {
     results_module.add_class::<results::GenerationResult>()?;
     m.add_submodule(results_module)?;
 
-    m.add_class::<model_base::InternalModel>()?;
-    m.add_class::<models::Llama>()?;
-    m.add_class::<models::GPTJ>()?;
-    
-    
+
+    let models_module = PyModule::new(_py, "models")?;
+    models_module.add_class::<models::Llama>()?;
+    models_module.add_class::<models::GPTJ>()?;
+    models_module.add_class::<models::GPT2>()?;
+    models_module.add_class::<models::NeoX>()?;
+    models_module.add_class::<models::Bloom>()?;
+    m.add_submodule(models_module)?;
+
     //hacky but apparently the only way to get a submodule to work on all platforms with typehints
     //see https://github.com/PyO3/pyo3/issues/759
     _py.import("sys")?
@@ -37,6 +38,10 @@ fn llm_rs(_py: Python, m: &PyModule) -> PyResult<()> {
     _py.import("sys")?
         .getattr("modules")?
         .set_item("llm_rs.results", results_module)?;
+
+    _py.import("sys")?
+        .getattr("modules")?
+        .set_item("llm_rs.models", models_module)?;
 
     Ok(())
 }
