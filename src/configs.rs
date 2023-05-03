@@ -15,6 +15,8 @@ pub struct GenerationConfig {
     pub seed:u64,
     #[pyo3(get, set)]
     pub max_new_tokens :Option<usize>,
+    #[pyo3(get, set)]
+    pub stop_words :Option<Vec<String>>,
 }
 
 impl Default for GenerationConfig {
@@ -26,6 +28,7 @@ impl Default for GenerationConfig {
             repetition_penalty:1.30,
             seed:42,
             max_new_tokens :None,
+            stop_words :None,
         }
     }
 }
@@ -34,7 +37,7 @@ impl Default for GenerationConfig {
 impl GenerationConfig {
 
     #[new]
-    fn new(top_k: Option<usize>,top_p:Option<f32>,temperature:Option<f32>,repetition_penalty:Option<f32>,seed:Option<u64>, max_new_tokens:Option<usize>) -> Self {
+    fn new(top_k: Option<usize>,top_p:Option<f32>,temperature:Option<f32>,repetition_penalty:Option<f32>,seed:Option<u64>, max_new_tokens:Option<usize>,stop_words:Option<Vec<String>>) -> Self {
         GenerationConfig {
             top_k: top_k.unwrap_or(40),
             top_p: top_p.unwrap_or(0.95),
@@ -42,6 +45,7 @@ impl GenerationConfig {
             repetition_penalty: repetition_penalty.unwrap_or(1.30),
             seed: seed.unwrap_or(42),
             max_new_tokens:max_new_tokens,
+            stop_words:stop_words,
         }
     }
 }
@@ -95,6 +99,8 @@ pub struct SessionConfig {
     pub keys_memory_type:Precision,
     #[pyo3(get, set)]
     pub values_memory_type:Precision,
+    #[pyo3(get)]
+    pub prefer_mmap:bool,
 }
 
 impl Default for SessionConfig {
@@ -106,6 +112,7 @@ impl Default for SessionConfig {
             repetition_penalty_last_n:512,
             keys_memory_type:Precision::FP32,
             values_memory_type:Precision::FP32,
+            prefer_mmap:true,
         }
     }
 }
@@ -119,6 +126,7 @@ impl SessionConfig {
         repetition_penalty_last_n:Option<usize>,
         keys_memory_type:Option<Precision>,
         values_memory_type:Option<Precision>,
+        prefer_mmap:Option<bool>
     ) -> Self {
         SessionConfig {
             threads:threads.unwrap_or(8),
@@ -127,6 +135,7 @@ impl SessionConfig {
             repetition_penalty_last_n:repetition_penalty_last_n.unwrap_or(512),
             keys_memory_type:keys_memory_type.unwrap_or(Precision::FP32),
             values_memory_type:values_memory_type.unwrap_or(Precision::FP32),
+            prefer_mmap:prefer_mmap.unwrap_or(true),
         }
     }
 }

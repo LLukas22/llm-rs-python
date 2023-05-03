@@ -2,8 +2,8 @@ use pyo3::prelude::*;
 
 mod configs;
 mod results;
-mod model;
-
+mod models;
+mod model_base;
 
 
 
@@ -23,7 +23,10 @@ fn llm_rs(_py: Python, m: &PyModule) -> PyResult<()> {
     results_module.add_class::<results::GenerationResult>()?;
     m.add_submodule(results_module)?;
 
-    m.add_class::<model::Model>()?;
+    m.add_class::<model_base::InternalModel>()?;
+    m.add_class::<models::Llama>()?;
+    m.add_class::<models::GPTJ>()?;
+    
     
     //hacky but apparently the only way to get a submodule to work on all platforms with typehints
     //see https://github.com/PyO3/pyo3/issues/759
