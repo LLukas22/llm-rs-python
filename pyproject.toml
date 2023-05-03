@@ -3,11 +3,11 @@ requires = ["maturin>=0.14,<0.15"]
 build-backend = "maturin"
 
 [project]
-name = "llama-rs-python"
+name = "llm-rs"
 authors = [
   { name="Lukas Kreussel"},
 ]
-description = "Unofficial python bindings for llama-rs. 🐍❤️🦀"
+description = "Unofficial python bindings for llm-rs. 🐍❤️🦀"
 requires-python = ">=3.7"
 classifiers = [
     "Programming Language :: Rust",

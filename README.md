@@ -1,25 +1,26 @@
-# llama-rs-python
-Unofficial python bindings for [llama-rs](https://github.com/rustformers/llama-rs) created with [PyO3](https://github.com/PyO3/pyo3). 🐍❤️🦀
+# llm-rs-python
+Unofficial python bindings for the rust [llm](https://github.com/rustformers/llm) library created with [PyO3](https://github.com/PyO3/pyo3). 🐍❤️🦀
 
-This package gives access to the basic functionality of the llama-rs project.
+This package allows you to run multiple different Large Language Models (LLMs) like LLama or GPT-NeoX on your CPU.
 
-GGML converted models can be loaded and executed.
+All supported architectures are listed on the [llm](https://github.com/rustformers/llm) project page.
+
 
 ## Installation
 
-Simply install it via pip: `pip install llama-rs-python`
+Simply install it via pip: `pip install llm-rs`
 
 ## Usage
 
-The package is typehinted for easy usage.
+The package is type-hinted for easy usage.
 
-A usage example could look like this:
+A llama model can be run like this:
 
 ```python 
-from llama_rs_python import Model
+from llm_rs import Llama
 
 #load the model
-model = Model("path/to/model.bin")
+model = Llama("path/to/model.bin")
 
 #generate
 print(model.generate("The meaning of life is"))
@@ -29,12 +30,12 @@ The package also supports callbacks to get each token as it is generated.
 The callback-function also supports canceling the generation by returning a `True` value from the pytohn side.
 
 ```python 
-from llama_rs_python import Model
+from llm_rs import Llama
 import sys
 from typing import Optional
 
 #load the model
-model = Model("path/to/model.bin")
+model = Llama("path/to/model.bin")
 
 #define the callback
 def callback(token:str)->Optional[bool]:
@@ -49,10 +50,10 @@ model.generate("The meaning of life is",callback=callback)
 The configuration of the generation is handled by the `GenerationConfig` class.
 
 ```python 
-from llama_rs_python import Model, GenerationConfig
+from llm_rs import Llama, GenerationConfig
 
 #load the model
-model = Model("path/to/model.bin")
+model = Llama("path/to/model.bin")
 
 #create a config
 config = GenerationConfig(top_p=0.9,seed=1441,max_new_tokens=1024)
@@ -64,11 +65,11 @@ print(model.generate("The meaning of life is",generation_config=config))
 To configure model specific settings the `SessionConfig` class can be used.
 
 ```python
-from llama_rs_python import Model, SessionConfig
+from llm_rs import Llama, SessionConfig
 
 #define the session
 session_config = SessionConfig(threads=8,context_length=512)
 
 #load the model
-model = Model("path/to/model.bin",session_config=session_config)
+model = Llama("path/to/model.bin",session_config=session_config)
 ```
