@@ -11,6 +11,30 @@ use rand::prelude::*;
 use crate::configs;
 use crate::results;
 
+
+pub fn _tokenize(model: & dyn llm::Model,text: &str) -> Result<Vec<i32>,InferenceError>{
+    Ok(model.vocabulary()
+        .tokenize(text,false)?
+        .iter()
+        .map(|(_, token)| *token)
+        .collect())
+}
+
+pub fn _decode(model: & dyn llm::Model,tokens: Vec<i32>) -> Result<String,std::str::Utf8Error>{
+    let vocab = model.vocabulary();
+    let characters:Vec<u8> = tokens
+    .into_iter()
+    .map(|token| vocab.id_to_token[token as usize].to_owned())
+    .flatten()
+    .collect();
+
+    match std::str::from_utf8(&characters){
+        Ok(text) => Ok(text.to_string()),
+        Err(e) => Err(e),
+    }
+}
+
+
 pub fn _generate(
         _py: Python,
         model: & dyn llm::Model,
@@ -162,6 +186,20 @@ macro_rules! wrap_model {
             ) -> PyResult<crate::results::GenerationResult> {
 
                 return crate::model_base::_generate(_py,self.llm_model.as_ref(),&self.config,prompt, generation_config, callback);
+            }
+
+            fn tokenize(&self,text:String)-> PyResult<Vec<i32>>{
+                match crate::model_base::_tokenize(self.llm_model.as_ref(),&text){
+                    Ok(tokens) => Ok(tokens),
+                    Err(e) => Err(pyo3::exceptions::PyException::new_err(e.to_string()))
+                }
+            }
+
+            fn decode(&self,tokens:Vec<i32>)-> PyResult<String>{
+                match crate::model_base::_decode(self.llm_model.as_ref(),tokens){
+                    Ok(tokens) => Ok(tokens),
+                    Err(e) => Err(pyo3::exceptions::PyException::new_err(e.to_string()))
+                }
             }
         }
 

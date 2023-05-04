@@ -1,4 +1,4 @@
-from typing import Optional, Callable
+from typing import Optional, Callable, List
 from abc import ABC, abstractmethod
 
 from .config import GenerationConfig, SessionConfig
@@ -22,6 +22,18 @@ class Model(ABC):
     def generate(self,prompt:str,
                  generation_config:Optional[GenerationConfig]=None,
                  callback:Callable[[str],Optional[bool]]=None) -> GenerationResult: ...
+    
+    def tokenize(self,text:str) -> List[int]:
+        """
+        Tokenizes a string into a list of tokens.
+        """
+        ...
+    
+    def decode(self,tokens:List[int]) -> str:
+        """
+        Decodes a list of tokens into a string.
+        """
+        ...
     
 
 class Llama(Model):
