@@ -27,7 +27,7 @@ print(model.generate("The meaning of life is"))
 ```
 
 The package also supports callbacks to get each token as it is generated.
-The callback-function also supports canceling the generation by returning a `True` value from the pytohn side.
+The callback-function also supports canceling the generation by returning a `True` value from the python side.
 
 ```python 
 from llm_rs import Llama

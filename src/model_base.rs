@@ -2,8 +2,8 @@ use pyo3::prelude::*;
 use pyo3::exceptions::PyException;
 use pyo3::types::{PyTuple};
 
-use llm::{InferenceError, TokenUtf8Buffer};
-
+use llm::{InferenceError, TokenUtf8Buffer,};
+use llm_base::{EvaluateOutputRequest};
 
 use rand_chacha::ChaCha8Rng;
 use rand::prelude::*;
@@ -69,9 +69,12 @@ pub fn _generate(
     
             let feed_start_at = std::time::SystemTime::now();
             //Feed the prompt
-            session.feed_prompt(model, &generation_params, &prompt, |_| {
-                Ok::<(), InferenceError>(())
-            });
+            
+            
+            let mut output_request_feeding = EvaluateOutputRequest::default();
+            _py.allow_threads(||session.feed_prompt(model, &generation_params, &prompt, &mut output_request_feeding,|_| {
+                Ok::<(),InferenceError>(())
+            }).unwrap());
             let feed_prompt_duration = feed_start_at.elapsed().unwrap();
     
     
@@ -80,9 +83,23 @@ pub fn _generate(
             let mut token_utf8_buf = TokenUtf8Buffer::new();
     
             let mut total_generated_text = String::new();
-            let mut stop_reason = results::StopReason::EndToken;
+            let stop_reason ;
     
             let generation_start_at = std::time::SystemTime::now();
+
+       
+            let mut output_request_generation = EvaluateOutputRequest::default();   
+            let mut _generate_next_tokens= ||-> Result<Option<String>, PyErr>{
+                
+                let token = match session.infer_next_token(model, &generation_params, &mut output_request_generation,&mut rng) {
+                    Ok(token) => token,
+                    Err(InferenceError::EndOfText) => return Ok(None),
+                    Err(e) => return Err(PyException::new_err(e.to_string())),
+                };
+                Ok(token_utf8_buf.push(token))
+
+            };
+
             loop {
                 //Check if we have reached the maximum token count
                 if config_to_use.max_new_tokens.is_some() && tokens_processed >= config_to_use.max_new_tokens.unwrap() {
@@ -91,14 +108,17 @@ pub fn _generate(
                 }
     
                 //Infere the next token and break if the END_OF_TEXT token is reached
-                let token = match session.infer_next_token(model, &generation_params, &mut rng) {
-                    Ok(token) => token,
-                    Err(InferenceError::EndOfText) => break,
-                    Err(e) => return Err(PyException::new_err(e.to_string())),
-                };
-    
+                
+                let mut token:Option<String> = None;
+                _py.allow_threads(|| token=_generate_next_tokens().unwrap());
+               
+
+                if token.is_none() {
+                    stop_reason=results::StopReason::EndToken;
+                    break;
+                }
                 //Buffer until a valid utf8 sequence is found
-                if let Some(tokens) = token_utf8_buf.push(token) {
+                if let Some(tokens) = token {
     
                     total_generated_text.push_str(&tokens);
                     //Check if the callback function is set and call it
@@ -118,6 +138,9 @@ pub fn _generate(
     
                 tokens_processed += 1;
             }
+            
+           
+
             let generation_duration = generation_start_at.elapsed().unwrap();
     
             let result = results::GenerationResult{
@@ -162,11 +185,14 @@ macro_rules! wrap_model {
                 let config_to_use = session_config.unwrap_or(default_config);
             
                 let path = std::path::Path::new(&path);
-                
+                let model_params =  llm_base::ModelParameters{
+                    n_context_tokens: config_to_use.context_length,
+                    prefer_mmap: config_to_use.prefer_mmap,
+                    ..Default::default()
+                };
                 let llm_model: $llm_model = llm_base::load(
                     &path,
-                    config_to_use.prefer_mmap,
-                    config_to_use.context_length,
+                    model_params,
                     |load_progress| {
                     if should_log{
                         llm_base::load_progress_callback_stdout(load_progress)
