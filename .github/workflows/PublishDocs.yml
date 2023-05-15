@@ -1,5 +1,6 @@
 name: Publish Docs
 on:
+  workflow_dispatch:
   release:
     types: [published]
 
