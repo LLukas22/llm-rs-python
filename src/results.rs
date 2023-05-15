@@ -14,13 +14,17 @@ pub struct GenerationTimes {
 
 impl fmt::Display for GenerationTimes {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "(Total: {} ms, Feeding: {} ms, Generation: {} ms)", self.total, self.prompt_feeding, self.generation)
+        write!(
+            f,
+            "(Total: {} ms, Feeding: {} ms, Generation: {} ms)",
+            self.total, self.prompt_feeding, self.generation
+        )
     }
 }
 
 #[pyclass]
 #[derive(Clone)]
-pub enum StopReason{
+pub enum StopReason {
     EndToken,
     MaxLength,
     UserCancelled,
@@ -36,7 +40,6 @@ impl fmt::Display for StopReason {
     }
 }
 
-
 #[pyclass]
 pub struct GenerationResult {
     #[pyo3(get)]
@@ -49,7 +52,10 @@ pub struct GenerationResult {
 
 #[pymethods]
 impl GenerationResult {
-   fn __repr__(&self)->PyResult<String>{
-       Ok(format!("GenerationResult(text='{}', times={}, stop_reason={})",self.text,self.times,self.stop_reason))
+    fn __repr__(&self) -> PyResult<String> {
+        Ok(format!(
+            "GenerationResult(text='{}', times={}, stop_reason={})",
+            self.text, self.times, self.stop_reason
+        ))
     }
 }

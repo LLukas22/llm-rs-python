@@ -1,13 +1,12 @@
 use pyo3::prelude::*;
 
 mod configs;
-mod results;
-mod models;
 mod model_base;
+mod models;
+mod results;
 
 #[pymodule]
 fn llm_rs(_py: Python, m: &PyModule) -> PyResult<()> {
-
     let config_module = PyModule::new(_py, "config")?;
     config_module.add_class::<configs::GenerationConfig>()?;
     config_module.add_class::<configs::Precision>()?;
@@ -19,7 +18,6 @@ fn llm_rs(_py: Python, m: &PyModule) -> PyResult<()> {
     results_module.add_class::<results::StopReason>()?;
     results_module.add_class::<results::GenerationResult>()?;
     m.add_submodule(results_module)?;
-
 
     let models_module = PyModule::new(_py, "models")?;
     models_module.add_class::<models::Llama>()?;

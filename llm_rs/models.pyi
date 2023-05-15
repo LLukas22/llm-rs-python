@@ -17,7 +17,11 @@ class Model(ABC):
     @property
     def verbose(self)->bool: ...
     
-    def  __init__(self,path:str,session_config:SessionConfig=SessionConfig(), verbose:bool=False) -> None: ...
+    def  __init__(self,
+                  path:str,
+                  session_config:SessionConfig=SessionConfig(),
+                  lora_path:Optional[str]=None,
+                  verbose:bool=False) -> None: ...
     
     def generate(self,prompt:str,
                  generation_config:Optional[GenerationConfig]=None,
