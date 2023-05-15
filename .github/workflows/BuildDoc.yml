@@ -1,0 +1,28 @@
+name: Build Docs
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+
+permissions:
+    contents: read
+
+jobs:
+    build-doc:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v3
+            - uses: actions/setup-python@v4
+              with:
+                python-version: 3.x
+            
+            - name: Install dependencies
+              run: pip install -r requirements.txt
+              working-directory: docs   
+             
+            - name: Build docs
+              run: mkdocs build
+              working-directory: docs
+                
