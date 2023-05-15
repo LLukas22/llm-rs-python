@@ -164,7 +164,7 @@ pub fn _generate(
 macro_rules! wrap_model {
     ($name:ident,$llm_model:ty) => {
         #[pyclass]
-        #[allow(clippy::upper_case_acronyms)] 
+        #[allow(clippy::upper_case_acronyms)]
         pub struct $name {
             #[pyo3(get, set)]
             pub config: crate::configs::SessionConfig,
