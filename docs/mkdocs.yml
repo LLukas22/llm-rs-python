@@ -1,0 +1,51 @@
+site_name: llm-rs 
+repo_url: https://github.com/LLukas22/llm-rs-python
+repo_name: LLukas22/llm-rs-python
+
+theme:
+  name: material
+  icon:
+    repo: fontawesome/brands/github
+  features:
+      - navigation.tabs
+      - navigation.sections
+      - toc.integrate
+      - navigation.top
+      - search.suggest
+      - search.highlight
+      - search.share
+      - content.tabs.link
+      - content.code.annotation
+      - content.code.copy
+  language: en
+  palette:
+    # Palette toggle for light mode
+    - scheme: default
+      toggle:
+        icon: material/brightness-7 
+        name: Switch to dark mode
+    # Palette toggle for dark mode
+    - scheme: slate 
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode    
+
+plugins:
+  - search
+
+markdown_extensions:
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - admonition
+  - pymdownx.arithmatex:
+      generic: true
+  - footnotes
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.mark
+  - attr_list
+  - pymdownx.emoji:
+      emoji_index: !!python/name:materialx.emoji.twemoji
+      emoji_generator: !!python/name:materialx.emoji.to_svg
