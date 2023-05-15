@@ -11,7 +11,7 @@ env:
 
 jobs:
     fmt:
-        name: Clippy, formatting and docs
+        name: Clippy and formatting
         runs-on: ubuntu-latest
         steps:
           - uses: actions/checkout@v3
