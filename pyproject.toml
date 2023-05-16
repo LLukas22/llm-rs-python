@@ -16,10 +16,11 @@ classifiers = [
     "Programming Language :: Python :: 3",
     "License :: OSI Approved :: MIT License",
 ]
+keywords = ["LLM","Transformers"]
 
 [project.urls]
-"Homepage" = "https://github.com/LLukas22/llm-rs-python"
-"Bug Tracker" = "https://github.com/LLukas22/llm-rs-python/issues"
+repository = "https://github.com/LLukas22/llm-rs-python"
+documentation  = "https://llukas22.github.io/llm-rs-python/"
 
 
 [tool.maturin]
