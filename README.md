@@ -1,10 +1,10 @@
-# llm-rs-python
-Unofficial python bindings for the rust [llm](https://github.com/rustformers/llm) library created with [PyO3](https://github.com/PyO3/pyo3). 🐍❤️🦀
+# llm-rs-python: Python Bindings for Rust's llm Library
 
-This package allows you to run multiple different Large Language Models (LLMs) like LLama or GPT-NeoX on your CPU.
+Welcome to `llm-rs`, an unofficial Python interface for the Rust-based [llm](https://github.com/rustformers/llm) library, made possible through [PyO3](https://github.com/PyO3/pyo3). Our package combines the convenience of Python with the performance of Rust to offer an efficient tool for your machine learning projects. 🐍❤️🦀
 
-All supported architectures are listed on the [llm](https://github.com/rustformers/llm) project page.
+With `llm-rs`, you can operate a variety of Large Language Models (LLMs) including LLama and GPT-NeoX directly on your CPU. 
 
+For a detailed overview of all the supported architectures, visit the [llm](https://github.com/rustformers/llm) project page. 
 
 ## Installation
 
@@ -14,7 +14,7 @@ Simply install it via pip: `pip install llm-rs`
 
 The package is type-hinted for easy usage.
 
-A llama model can be run like this:
+A Llama model can be run like this:
 
 ```python 
 from llm_rs import Llama
@@ -26,50 +26,6 @@ model = Llama("path/to/model.bin")
 print(model.generate("The meaning of life is"))
 ```
 
-The package also supports callbacks to get each token as it is generated.
-The callback-function also supports canceling the generation by returning a `True` value from the python side.
+## Documentation
 
-```python 
-from llm_rs import Llama
-import sys
-from typing import Optional
-
-#load the model
-model = Llama("path/to/model.bin")
-
-#define the callback
-def callback(token:str)->Optional[bool]:
-    print(token,end="")
-    sys.stdout.flush()
-    # (return True here to cancel the generation)
-
-#start generation
-model.generate("The meaning of life is",callback=callback)
-```
-
-The configuration of the generation is handled by the `GenerationConfig` class.
-
-```python 
-from llm_rs import Llama, GenerationConfig
-
-#load the model
-model = Llama("path/to/model.bin")
-
-#create a config
-config = GenerationConfig(top_p=0.9,seed=1441,max_new_tokens=1024)
-
-#generate
-print(model.generate("The meaning of life is",generation_config=config))
-```
-
-To configure model specific settings the `SessionConfig` class can be used.
-
-```python
-from llm_rs import Llama, SessionConfig
-
-#define the session
-session_config = SessionConfig(threads=8,context_length=512)
-
-#load the model
-model = Llama("path/to/model.bin",session_config=session_config)
-```
+For in-depth information on customizing the loading and generation processes, refer to our detailed [documentation](https://llukas22.github.io/llm-rs-python/).

@@ -21,9 +21,9 @@ fn llm_rs(_py: Python, m: &PyModule) -> PyResult<()> {
 
     let models_module = PyModule::new(_py, "models")?;
     models_module.add_class::<models::Llama>()?;
-    models_module.add_class::<models::GPTJ>()?;
-    models_module.add_class::<models::GPT2>()?;
-    models_module.add_class::<models::NeoX>()?;
+    models_module.add_class::<models::GptJ>()?;
+    models_module.add_class::<models::Gpt2>()?;
+    models_module.add_class::<models::GptNeoX>()?;
     models_module.add_class::<models::Bloom>()?;
     m.add_submodule(models_module)?;
 
