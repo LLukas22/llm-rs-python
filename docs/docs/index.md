@@ -35,12 +35,12 @@ You can find these models on the [HuggingfaceHub](https://huggingface.co/models?
 
 All available model architectures can be accessed through the `llm_rs` module.
 
-Here's a simple illustration of how to load a LLaMA model (like [gpt4all](https://huggingface.co/LLukas22/gpt4all-lora-quantized-ggjt)):
+Here's a simple illustration of how to load a MPT model (like [mpt-7b](https://huggingface.co/LLukas22/mpt-7b-ggml)):
 
 ```python
-from llm_rs import Llama
+from llm_rs import Mpt
 
-model = Llama("path/to/model.bin")
+model = Mpt("path/to/model.bin")
 ```
 
 ### Text Generation
@@ -108,7 +108,17 @@ In this example, we've configured the session to use 12 threads, a context lengt
 ```python
 from llm_rs import Llama
 
-model = Llama("path/to/model.bin", lora_path="path/to/lora.bin")
+model = Llama("path/to/model.bin", lora_paths=["path/to/lora.bin"])
+```
+
+#### Using multiple LoRA Adapters
+
+If multiple [LoRA](https://arxiv.org/abs/2106.09685) adapters should be used they can simply be added by passing multiple files to the `lora_paths` parameter.
+
+```python
+from llm_rs import Llama
+
+model = Llama("path/to/model.bin", lora_paths=["path/to/lora_1.bin","path/to/lora_2.bin"])
 ```
 
 ### Verbose Loading for Detailed Insights

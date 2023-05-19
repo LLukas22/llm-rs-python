@@ -11,3 +11,5 @@ wrap_model!(Gpt2, llm::models::Gpt2);
 wrap_model!(GptNeoX, llm::models::GptNeoX);
 
 wrap_model!(Bloom, llm::models::Bloom);
+
+wrap_model!(Mpt, llm::models::Mpt);

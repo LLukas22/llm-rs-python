@@ -173,7 +173,7 @@ macro_rules! wrap_model {
             #[pyo3(get)]
             pub path: String,
             #[pyo3(get)]
-            pub lora_path: Option<String>,
+            pub lora_paths: Option<Vec<String>>,
             pub llm_model: Box<dyn llm::Model>,
         }
 
@@ -183,7 +183,7 @@ macro_rules! wrap_model {
             fn new(
                 path: String,
                 session_config: Option<crate::configs::SessionConfig>,
-                lora_path: Option<String>,
+                lora_paths: Option<Vec<String>>,
                 verbose: Option<bool>,
             ) -> Self {
                 let should_log = verbose.unwrap_or(false);
@@ -193,11 +193,13 @@ macro_rules! wrap_model {
                 let config_to_use = session_config.unwrap_or(default_config);
 
                 let path = std::path::Path::new(&path);
-                let lora_path = lora_path.as_ref().map(|s| std::path::PathBuf::from(s));
+                let lora_paths = lora_paths.map(|strings| {
+                    strings.into_iter().map(std::path::PathBuf::from).collect()
+                });
                 let model_params = llm_base::ModelParameters {
                     n_context_tokens: config_to_use.context_length,
                     prefer_mmap: config_to_use.prefer_mmap,
-                    lora_adapter: lora_path.clone(),
+                    lora_adapters: lora_paths.clone(),
                     ..Default::default()
                 };
                 let llm_model: $llm_model =
@@ -213,7 +215,7 @@ macro_rules! wrap_model {
                     verbose: should_log,
                     path: path.to_str().unwrap().to_string(),
                     llm_model: Box::new(llm_model),
-                    lora_path: lora_path.map(|p| p.to_str().unwrap().to_string()),
+                    lora_paths: lora_paths.map(|paths| paths.into_iter().map(|p| p.to_str().unwrap().to_string()).collect()),
                 }
             }
 
