@@ -193,9 +193,8 @@ macro_rules! wrap_model {
                 let config_to_use = session_config.unwrap_or(default_config);
 
                 let path = std::path::Path::new(&path);
-                let lora_paths = lora_paths.map(|strings| {
-                    strings.into_iter().map(std::path::PathBuf::from).collect()
-                });
+                let lora_paths = lora_paths
+                    .map(|strings| strings.into_iter().map(std::path::PathBuf::from).collect());
                 let model_params = llm_base::ModelParameters {
                     n_context_tokens: config_to_use.context_length,
                     prefer_mmap: config_to_use.prefer_mmap,
@@ -215,7 +214,12 @@ macro_rules! wrap_model {
                     verbose: should_log,
                     path: path.to_str().unwrap().to_string(),
                     llm_model: Box::new(llm_model),
-                    lora_paths: lora_paths.map(|paths| paths.into_iter().map(|p| p.to_str().unwrap().to_string()).collect()),
+                    lora_paths: lora_paths.map(|paths| {
+                        paths
+                            .into_iter()
+                            .map(|p| p.to_str().unwrap().to_string())
+                            .collect()
+                    }),
                 }
             }
 
