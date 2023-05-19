@@ -1,5 +1,5 @@
 from typing import Optional, Callable, List
-from abc import ABC, abstractmethod
+from abc import ABC
 
 from .config import GenerationConfig, SessionConfig
 from .results import GenerationResult
@@ -16,11 +16,14 @@ class Model(ABC):
     
     @property
     def verbose(self)->bool: ...
-    
+
+    @property
+    def lora_paths(self)->Optional[List[str]]: ...
+
     def  __init__(self,
                   path:str,
                   session_config:SessionConfig=SessionConfig(),
-                  lora_path:Optional[str]=None,
+                  lora_paths:Optional[List[str]]=None,
                   verbose:bool=False) -> None: ...
     
     def generate(self,prompt:str,
@@ -47,13 +50,13 @@ class Llama(Model):
     ...
     
     
-class GPTJ(Model):
+class GptJ(Model):
     """
     Wrapper around all GPTJ based models.
     """
     ...
     
-class GPT2(Model):
+class Gpt2(Model):
     """
     Wrapper around all GPT2 based models.
     """
@@ -65,8 +68,14 @@ class Bloom(Model):
     """
     ...
     
-class NeoX(Model):
+class GptNeoX(Model):
     """
     Wrapper around all GPT-NeoX based models.
+    """
+    ...
+
+class Mpt(Model):
+    """
+    Wrapper around all Mpt based models.
     """
     ...

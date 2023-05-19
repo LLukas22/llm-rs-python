@@ -1,6 +1,6 @@
 from .llm_rs import *
 from .config import GenerationConfig, SessionConfig, Precision
-from .models import Llama, GPTJ, GPT2, Bloom, NeoX
+from .models import Llama, GptJ, Gpt2, Bloom, GptNeoX, Mpt
 
 __doc__ = llm_rs.__doc__
 if hasattr(llm_rs, "__all__"):
