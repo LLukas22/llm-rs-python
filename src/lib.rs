@@ -28,6 +28,7 @@ fn llm_rs(_py: Python, m: &PyModule) -> PyResult<()> {
     models_module.add_class::<models::Gpt2>()?;
     models_module.add_class::<models::GptNeoX>()?;
     models_module.add_class::<models::Bloom>()?;
+    models_module.add_class::<models::Mpt>()?;
     m.add_submodule(models_module)?;
 
     //hacky but apparently the only way to get a submodule to work on all platforms with typehints
