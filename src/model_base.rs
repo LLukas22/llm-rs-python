@@ -253,6 +253,22 @@ macro_rules! wrap_model {
                     Err(e) => Err(pyo3::exceptions::PyException::new_err(e.to_string())),
                 }
             }
+
+            #[staticmethod]
+            fn quantize(
+                source: String,
+                destination: String,
+                quantization: Option<crate::quantize::QuantizationType>,
+                container: Option<crate::quantize::ContainerType>,
+            ) -> PyResult<()> {
+                crate::quantize::_quantize::<$llm_model>(
+                    source.into(),
+                    destination.into(),
+                    container.unwrap_or(crate::quantize::ContainerType::GGJT),
+                    quantization.unwrap_or(crate::quantize::QuantizationType::Q4_0),
+                )
+                .map_err(|e| pyo3::exceptions::PyException::new_err(e.to_string()))
+            }
         }
     };
 }

@@ -15,3 +15,4 @@ rand_chacha = "0.3.1"
 log  =  "0.4.17"
 llm = { git = "https://github.com/rustformers/llm.git" }
 llm-base = { git = "https://github.com/rustformers/llm.git" }
+ggml = { git = "https://github.com/rustformers/llm.git" }
