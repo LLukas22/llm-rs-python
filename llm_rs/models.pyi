@@ -1,7 +1,7 @@
 from typing import Optional, Callable, List
 from abc import ABC, abstractmethod
 
-from .config import GenerationConfig, SessionConfig
+from .config import GenerationConfig, SessionConfig, ContainerType, QuantizationType
 from .results import GenerationResult
 
 #Theoretically this is incorrect as the 'model' doesnt actually exist, but it is a good enough approximation for now. 
@@ -25,7 +25,11 @@ class Model(ABC):
     
     def generate(self,prompt:str,
                  generation_config:Optional[GenerationConfig]=None,
-                 callback:Callable[[str],Optional[bool]]=None) -> GenerationResult: ...
+                 callback:Callable[[str],Optional[bool]]=None) -> GenerationResult: 
+        """
+        Generates text from a prompt.
+        """ 
+        ...
     
     def tokenize(self,text:str) -> List[int]:
         """
@@ -36,6 +40,13 @@ class Model(ABC):
     def decode(self,tokens:List[int]) -> str:
         """
         Decodes a list of tokens into a string.
+        """
+        ...
+
+    @staticmethod
+    def quantize(source:str,destination:str,quantization:QuantizationType=QuantizationType.Q4_0,container:ContainerType=ContainerType.GGJT)->None:
+        """
+        Quantizes the model.
         """
         ...
     

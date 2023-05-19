@@ -3,6 +3,7 @@ use pyo3::prelude::*;
 mod configs;
 mod model_base;
 mod models;
+mod quantize;
 mod results;
 
 #[pymodule]
@@ -11,6 +12,8 @@ fn llm_rs(_py: Python, m: &PyModule) -> PyResult<()> {
     config_module.add_class::<configs::GenerationConfig>()?;
     config_module.add_class::<configs::Precision>()?;
     config_module.add_class::<configs::SessionConfig>()?;
+    config_module.add_class::<quantize::ContainerType>()?;
+    config_module.add_class::<quantize::QuantizationType>()?;
     m.add_submodule(config_module)?;
 
     let results_module = PyModule::new(_py, "results")?;

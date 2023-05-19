@@ -1,5 +1,13 @@
-from typing import Optional,Callable,List
+from typing import Optional,List
 from enum import Enum
+
+class ContainerType(Enum):
+    GGML=0,
+    GGJT=1,
+
+class QuantizationType(Enum):
+    Q4_0=0,
+    Q4_1=1,
 
 class Precision(Enum):
     FP32=0,
