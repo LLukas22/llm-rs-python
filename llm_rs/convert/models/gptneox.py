@@ -5,11 +5,12 @@ from transformers import AutoTokenizer,AutoModelForCausalLM,AutoConfig
 import os
 import torch
 import struct
-import  numpy as np
+import numpy as np
+from ...auto_model import KnownModels
 
-
-#based on https://github.com/ggerganov/ggml/blob/master/examples/mpt/convert-h5-to-ggml.py
-class GptNeoXAdapter(BaseAdapter):
+#based on https://github.com/ggerganov/ggml/tree/master/examples/gpt-neox
+class GptNeoXConverter(BaseAdapter):
+    model_type:KnownModels=KnownModels.GptNeoX
 
     def load(self,pretrained_model_name_or_path:Union[str,os.PathLike],pretrained_tokenizer_name_or_path:Optional[Union[str,os.PathLike]]=None)->Tuple[AutoTokenizer,AutoModelForCausalLM]:
         config = AutoConfig.from_pretrained(pretrained_model_name_or_path)

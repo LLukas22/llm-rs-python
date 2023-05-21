@@ -6,7 +6,10 @@ import struct
 from enum import Enum
 import logging
 import numpy as np
-
+from ...config import QuantizationType,ContainerType
+from ...auto_model import ModelMetadata, KnownModels
+import pathlib
+import json
 
 GGML_MAGIC = 0x67676D6C
 
@@ -22,6 +25,8 @@ def write_file_type(out_file:BinaryIO,file_type:FileTypes=FileTypes.FP16):
 
 
 class BaseAdapter(ABC):
+    model_type:KnownModels=None
+
     def  __init__(self,pretrained_model_name_or_path:Union[str,os.PathLike],pretrained_tokenizer_name_or_path:Optional[Union[str,os.PathLike]]=None) -> None:
         self.config,self.tokenizer,self.model= self.load(pretrained_model_name_or_path,pretrained_tokenizer_name_or_path)
 
@@ -35,6 +40,7 @@ class BaseAdapter(ABC):
 
     def _write_vocabulary(self,out_file:BinaryIO):
         # TODO: temporary hack to not deal with implementing the tokenizer
+        logging.info(f"Processing vocabulary with size {self.config.vocab_size}")
         dot_token = self.tokenizer.encode(".")[0]
         for i in range(self.config.vocab_size):
             text = self.tokenizer.decode([dot_token, i]).encode("utf-8")
@@ -63,7 +69,7 @@ class BaseAdapter(ABC):
             data = weight.squeeze().numpy()
 
             if self._filter_weights(name,data):
-                logging.info(f"Skipping {name}")
+                logging.info(f"Skipping layer '{name}'")
                 continue
             
             name = self._rename_weights(name)
@@ -83,16 +89,33 @@ class BaseAdapter(ABC):
             out_file.write(encoded_name)
             # data
             data.tofile(out_file)
-            logging.info(f"Writing layer '{name}' with shape {data.shape}")
+            logging.info(f"Converted layer '{name}' with shape {data.shape}")
 
 
 
-    def convert(self,output_directory:Union[str,os.PathLike])->str:
-        with open(output_directory, "wb") as out_file:
+    def convert(self,output_file:Union[str,os.PathLike])->None:
+
+        with open(output_file, "wb") as out_file:
             # write magic
             write_magic(out_file)
+            logging.info(f"Processing hyperparameters ...")
             self._write_hyperparameters(out_file)
             write_file_type(out_file)
 
             self._write_vocabulary(out_file)
             self._write_weights(out_file)
+            logging.info(f"Done converting model to GGML format. Saved to '{output_file}'")
+
+        #Create the *.meta file needed for automatic loading
+        metadata_file = pathlib.Path(output_file).with_suffix(".meta")
+        metadata = ModelMetadata(
+            self.model_type,
+            QuantizationType.F16,
+            ContainerType.GGML,
+            "llm-rs")
+        metadata.add_hash(output_file)
+        metadata_file.write_text(json.dumps(metadata.serialize(),indent=4))
+        
+        logging.info(f"Created metadata file at '{output_file}'")
+        return output_file
+

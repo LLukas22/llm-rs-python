@@ -4,10 +4,12 @@ from transformers import AutoTokenizer,AutoModelForCausalLM,AutoConfig
 import os
 import torch
 import struct
+from ...auto_model import KnownModels
 
 #based on https://github.com/ggerganov/ggml/blob/master/examples/mpt/convert-h5-to-ggml.py
-class MPTAdapter(BaseAdapter):
-
+class MPTConverter(BaseAdapter):
+    model_type:KnownModels=KnownModels.Mpt
+    
     def load(self,pretrained_model_name_or_path:Union[str,os.PathLike],pretrained_tokenizer_name_or_path:Optional[Union[str,os.PathLike]]=None)->Tuple[AutoTokenizer,AutoModelForCausalLM]:
         config = AutoConfig.from_pretrained(pretrained_model_name_or_path,trust_remote_code=True)
         
