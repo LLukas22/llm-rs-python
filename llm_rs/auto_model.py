@@ -2,7 +2,7 @@ from .config import QuantizationType,ContainerType,SessionConfig
 from pydantic import BaseModel
 import os
 import pathlib
-from .models import Mpt,GptNeoX
+from .models import Mpt,GptNeoX,GptJ,Gpt2,Bloom
 from .base_model import Model
 import logging
 from typing import Optional, List, Union,Type
@@ -15,6 +15,9 @@ from blake3 import blake3
 class KnownModels(Enum):
     GptNeoX = auto()
     Mpt = auto()
+    GptJ = auto()
+    Gpt2 = auto()
+    Bloom = auto()
 
 
 _QUANTIZATION_TYPE_MAP = {
@@ -26,6 +29,14 @@ _QUANTIZATION_TYPE_MAP = {
 _CONTAINER_TYPE_MAP = {
     "GGML": ContainerType.GGML,
     "GGJT": ContainerType.GGJT
+}
+
+_KNOWN_MODELS_MAP = {
+    KnownModels.GptNeoX: GptNeoX,
+    KnownModels.Mpt: Mpt,
+    KnownModels.GptJ: GptJ,
+    KnownModels.Gpt2: Gpt2,
+    KnownModels.Bloom: Bloom
 }
 
 @dataclass()
@@ -87,12 +98,12 @@ class AutoModel():
             raise ValueError(f"Model file '{model_file}' does not have a metadata file '{metadata_file}'!")
         
         metadata = ModelMetadata.deserialize(json.loads(metadata_file.read_text()))
-        if metadata.model == KnownModels.GptNeoX:
-            return GptNeoX
-        elif metadata.model == KnownModels.Mpt:
-            return Mpt
+
+        if metadata.model in _KNOWN_MODELS_MAP:
+            return _KNOWN_MODELS_MAP[metadata.model]
         else:
             raise ValueError(f"Unknown model type '{metadata.model}'")
+            
         
     @staticmethod
     def load(path:Union[str,os.PathLike],

@@ -10,6 +10,7 @@ from ...config import QuantizationType,ContainerType
 from ...auto_model import ModelMetadata, KnownModels
 import pathlib
 import json
+import torch
 
 GGML_MAGIC = 0x67676D6C
 
@@ -50,29 +51,35 @@ class BaseAdapter(ABC):
             out_file.write(text)
 
 
-    def _filter_weights(self,name:str,weight:np.ndarray)->bool:
+    def _filter_weights(self,name:str,weight:torch.Tensor)->bool:
         """Filter weights that should be skipped"""
         return False
     
-    def _filter_f16_weights(self,name:str,weight:np.ndarray)->bool:
+    def _filter_f16_weights(self,name:str,data:np.ndarray)->bool:
         """Filter weights that should be stored as fp16"""
-        n_dims = len(weight.shape)
+        n_dims = len(data.shape)
         return name.endswith(".weight") and n_dims == 2
     
     def _rename_weights(self,name:str)->str:
         """Rename weights that should be renamed"""
         return name
     
+    def _transform_weights(self,name:str,weight:torch.Tensor)->torch.Tensor:
+        """Transform weights that should be transformed"""
+        return weight
+    
     def _write_weights(self,out_file:BinaryIO):
         weights = self.model.state_dict()
         for name, weight in weights.items():
-            data = weight.squeeze().numpy()
+            
 
-            if self._filter_weights(name,data):
+            if self._filter_weights(name,weight):
                 logging.info(f"Skipping layer '{name}'")
                 continue
             
             name = self._rename_weights(name)
+            weight = self._transform_weights(name,weight)
+            data = weight.squeeze().numpy()
             n_dims = len(data.shape);    
             type = FileTypes.FP32
 

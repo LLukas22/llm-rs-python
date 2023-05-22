@@ -3,8 +3,20 @@ import os
 from typing import Union
 from .models.mpt import MPTConverter
 from .models.gptneox import GptNeoXConverter
+from .models.gptj import GptJConverter
+from .models.gpt2 import Gpt2Converter
+from .models.bloom import BloomConverter
 import logging 
 import pathlib
+
+
+_ARCHITECTURE_CONVERTER_MAP = {
+    "MPTForCausalLM": MPTConverter,
+    "GPTNeoXForCausalLM": GptNeoXConverter,
+    "GPTJForCausalLM": GptJConverter,
+    "GPT2LMHeadModel": Gpt2Converter,
+    "BloomForCausalLM":BloomConverter
+}
 
 class AutoConverter():
 
@@ -15,14 +27,10 @@ class AutoConverter():
         model_name = get_name_from_config(config)
 
         adapter=None
-        if architecture == "MPTForCausalLM":
-            adapter=MPTConverter
-        elif architecture == "GPTNeoXForCausalLM":
-            adapter=GptNeoXConverter
-        else:
+        if architecture not in _ARCHITECTURE_CONVERTER_MAP:
             raise ValueError(f"Unsupported architecture '{architecture}' for '{model_name}'")
+        adapter = _ARCHITECTURE_CONVERTER_MAP[architecture]
 
-        
         output_file = build_path(output_path,model_name)
         if os.path.exists(output_file):
             logging.warning(f"Skipping {model_name} via {adapter.__name__} because '{output_file}' already exists!")
