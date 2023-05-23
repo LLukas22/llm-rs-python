@@ -4,7 +4,7 @@ from transformers import AutoTokenizer,AutoModelForCausalLM,AutoConfig
 import os
 import torch
 import struct
-from ...auto_model import KnownModels
+from ...auto import KnownModels
 
 #based on https://github.com/ggerganov/ggml/blob/master/examples/mpt/convert-h5-to-ggml.py
 class MPTConverter(BaseAdapter):

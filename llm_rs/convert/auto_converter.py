@@ -6,6 +6,7 @@ from .models.gptneox import GptNeoXConverter
 from .models.gptj import GptJConverter
 from .models.gpt2 import Gpt2Converter
 from .models.bloom import BloomConverter
+from .models.llama import LlamaConverter
 import logging 
 import pathlib
 
@@ -15,7 +16,8 @@ _ARCHITECTURE_CONVERTER_MAP = {
     "GPTNeoXForCausalLM": GptNeoXConverter,
     "GPTJForCausalLM": GptJConverter,
     "GPT2LMHeadModel": Gpt2Converter,
-    "BloomForCausalLM":BloomConverter
+    "BloomForCausalLM":BloomConverter,
+    "LLaMAForCausalLM":LlamaConverter
 }
 
 class AutoConverter():

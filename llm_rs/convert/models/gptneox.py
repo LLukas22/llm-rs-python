@@ -6,7 +6,7 @@ import os
 import torch
 import struct
 import numpy as np
-from ...auto_model import KnownModels
+from ...auto import KnownModels
 
 #based on https://github.com/ggerganov/ggml/tree/master/examples/gpt-neox
 class GptNeoXConverter(BaseAdapter):

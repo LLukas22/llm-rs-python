@@ -2,7 +2,7 @@ from .config import QuantizationType,ContainerType,SessionConfig
 from pydantic import BaseModel
 import os
 import pathlib
-from .models import Mpt,GptNeoX,GptJ,Gpt2,Bloom
+from .models import Mpt,GptNeoX,GptJ,Gpt2,Bloom,Llama
 from .base_model import Model
 import logging
 from typing import Optional, List, Union,Type
@@ -18,6 +18,7 @@ class KnownModels(Enum):
     GptJ = auto()
     Gpt2 = auto()
     Bloom = auto()
+    Llama = auto()
 
 
 _QUANTIZATION_TYPE_MAP = {
@@ -36,7 +37,8 @@ _KNOWN_MODELS_MAP = {
     KnownModels.Mpt: Mpt,
     KnownModels.GptJ: GptJ,
     KnownModels.Gpt2: Gpt2,
-    KnownModels.Bloom: Bloom
+    KnownModels.Bloom: Bloom,
+    KnownModels.Llama: Llama
 }
 
 @dataclass()
@@ -47,7 +49,7 @@ class ModelMetadata():
     model: KnownModels
     quantization: QuantizationType
     container: ContainerType
-    converter:str
+    converter:str="llm-rs"
     hash:Optional[str]=None
 
     def add_hash(self,model_path:Union[str,os.PathLike]):
@@ -86,7 +88,7 @@ class AutoModel():
     Utility to load models, without having to specify the model type.
     """
     @staticmethod
-    def infer_model_type(model_file:Union[str,os.PathLike])->Type[Model]:
+    def load_metadata(model_file:Union[str,os.PathLike])->ModelMetadata:
         path = pathlib.Path(model_file)
         if not path.is_file():
             raise ValueError(f"Model file '{model_file}' is not a file!")
@@ -98,7 +100,12 @@ class AutoModel():
             raise ValueError(f"Model file '{model_file}' does not have a metadata file '{metadata_file}'!")
         
         metadata = ModelMetadata.deserialize(json.loads(metadata_file.read_text()))
-
+        return metadata
+    
+    @staticmethod
+    def infer_model_type(model_file:Union[str,os.PathLike])->Type[Model]:
+        
+        metadata = AutoModel.load_metadata(model_file)
         if metadata.model in _KNOWN_MODELS_MAP:
             return _KNOWN_MODELS_MAP[metadata.model]
         else:
@@ -114,6 +121,55 @@ class AutoModel():
         model_type = AutoModel.infer_model_type(path)
         return model_type(path,session_config,lora_paths,verbose)
             
-            
 
-    
+class AutoQuantizer():
+    """
+    Utility to quantize models, without having to specify the model type.
+    """
+    @staticmethod
+    def quantize(model_file:Union[str,os.PathLike],target_path:Optional[Union[str,os.PathLike]]=None,quantization:QuantizationType=QuantizationType.Q4_0,container:ContainerType=ContainerType.GGJT)->Union[str,os.PathLike]:
+        metadata=AutoModel.load_metadata(model_file)
+        if metadata.quantization != QuantizationType.F16:
+            raise ValueError(f"Model '{model_file}' is already quantized to '{metadata.quantization}'")
+
+        model_type = AutoModel.infer_model_type(model_file)
+
+        if target_path is None:
+            target_path = os.path.dirname(model_file)
+            
+        def build_target_name()->str:
+            output_path = pathlib.Path(target_path)
+            if output_path.is_file():
+                return output_path
+            else:
+                output_path.mkdir(parents=True,exist_ok=True)
+                model_path = pathlib.Path(model_file)
+                appendix = ""
+                if  quantization == QuantizationType.Q4_0:
+                    appendix += "-q4_0"
+                elif quantization == QuantizationType.Q4_1:
+                    appendix += "-q4_1"
+
+                if container == ContainerType.GGJT:
+                    appendix += "-ggjt"
+            
+                filename = model_path.stem.replace("-f16","") + appendix + model_path.suffix
+                return str(output_path / filename)
+
+        target_file = build_target_name()
+        if pathlib.Path(target_file).exists():
+            logging.warning(f"Target file '{target_file}' already exists, skipping quantization")
+            return target_file
+        
+        logging.info(f"Quantizing model '{model_file}' to '{target_file}'")
+        model_type.quantize(model_file,target_file,quantization,container)
+
+        metadata_file = pathlib.Path(target_file).with_suffix(".meta")
+        quantized_metadata = ModelMetadata(model=metadata.model,quantization=quantization,container=container)
+        quantized_metadata.add_hash(target_file)
+        logging.info(f"Writing metadata file '{metadata_file}'")
+        metadata_file.write_text(json.dumps(quantized_metadata.serialize()))
+        logging.info(f"Finished quantizing model '{model_file}' to '{target_file}'")
+        return target_file
+
+

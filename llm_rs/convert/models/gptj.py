@@ -6,7 +6,7 @@ import os
 import torch
 import struct
 import numpy as np
-from ...auto_model import KnownModels
+from ...auto import KnownModels
 
 #based on https://github.com/ggerganov/ggml/blob/master/examples/gpt-j/convert-h5-to-ggml.py
 class GptJConverter(BaseAdapter):
@@ -33,6 +33,11 @@ class GptJConverter(BaseAdapter):
         out_file.write(struct.pack("i", hyperparameters["n_layer"]))
         out_file.write(struct.pack("i", hyperparameters["rotary_dim"]))
 
+    def _write_vocabulary(self, out_file: BinaryIO):
+        # write the vocabulary size
+        out_file.write(struct.pack("i", self.config.vocab_size))
+        return super()._write_vocabulary(out_file)
+    
 
     def _filter_weights(self, name: str, weight: torch.Tensor) -> bool:
         return name.endswith("attn.masked_bias") or name.endswith(".attn.bias") 

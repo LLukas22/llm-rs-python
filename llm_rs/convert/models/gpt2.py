@@ -6,7 +6,7 @@ import os
 import torch
 import struct
 import numpy as np
-from ...auto_model import KnownModels
+from ...auto import KnownModels
 import re
 
 #based on https://github.com/ggerganov/ggml/blob/master/examples/gpt-2/convert-h5-to-ggml.py
@@ -90,11 +90,16 @@ class Gpt2Converter(BaseAdapter):
 
         return new_name
     
+    def _write_vocabulary(self, out_file: BinaryIO):
+        # write the vocabulary size
+        out_file.write(struct.pack("i", self.config.vocab_size))
+        return super()._write_vocabulary(out_file)
 
     def _transform_weights(self, name: str, weight: torch.Tensor) -> torch.Tensor:
         # for efficiency - transpose these matrices:
-        if name.endswith("/attn/c_attn/w") or name.endswith("/mlp/c_fc/w") or name.endswith("/attn/c_proj/w") or name.endswith("/attn/c_attn/w"):
-            return weight.transpose()
+        if name.endswith("/mlp/c_proj/w") or name.endswith("/mlp/c_fc/w") or name.endswith("/attn/c_proj/w") or name.endswith("/attn/c_attn/w"):
+            #see this issue: https://github.com/pytorch/pytorch/issues/50275
+            return weight.transpose(0,1)
         return weight
     
     def _filter_f16_weights(self, name: str, data: np.ndarray) -> bool:
