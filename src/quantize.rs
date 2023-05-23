@@ -38,7 +38,9 @@ pub fn _quantize<M: llm::KnownModel + 'static>(
     let quantization = match quantization {
         QuantizationType::Q4_0 => Ok(ggml::Type::Q4_0),
         QuantizationType::Q4_1 => Ok(ggml::Type::Q4_1),
-        QuantizationType::F16 => Err(QuantizeError::UnsupportedElementType { element_type: ggml::Type::F16 }),
+        QuantizationType::F16 => Err(QuantizeError::UnsupportedElementType {
+            element_type: ggml::Type::F16,
+        }),
     }?;
 
     let mut source = BufReader::new(std::fs::File::open(source)?);

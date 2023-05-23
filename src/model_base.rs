@@ -74,7 +74,7 @@ pub fn _generate(
     let mut output_request_feeding = OutputRequest::default();
     _py.allow_threads(|| {
         session
-            .feed_prompt::<Infallible,_>(
+            .feed_prompt::<Infallible, _>(
                 model,
                 &generation_params,
                 prompt,

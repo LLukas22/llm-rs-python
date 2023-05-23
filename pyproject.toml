@@ -19,6 +19,7 @@ classifiers = [
 keywords = ["LLM","Transformers"]
 dependencies =   [
   "blake3",
+  "huggingface-hub >= 0.14.1",
 ]
 
 
@@ -33,7 +34,7 @@ convert=[
   "torch >= 2.0.0",
   "accelerate >= 0.19.0",
   "tqdm",
-  "huggingface-hub >= 0.14.1",
+
   "einops >= 0.6.1"
 ]
 
