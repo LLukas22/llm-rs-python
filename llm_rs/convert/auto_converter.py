@@ -1,12 +1,7 @@
 from transformers import AutoConfig
 import os
 from typing import Union
-from .models.mpt import MPTConverter
-from .models.gptneox import GptNeoXConverter
-from .models.gptj import GptJConverter
-from .models.gpt2 import Gpt2Converter
-from .models.bloom import BloomConverter
-from .models.llama import LlamaConverter
+from .models import MPTConverter,GptNeoXConverter,GptJConverter,Gpt2Converter,BloomConverter,LlamaConverter
 import logging 
 import pathlib
 

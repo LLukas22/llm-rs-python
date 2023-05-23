@@ -27,21 +27,35 @@ cd ./llm-rs-python
 maturin develop -r
 ```
 
-### Model Loading
+### Model Loading and Deployment
 
-Right now, this library leverages [ggml](https://github.com/ggerganov/ggml) as a backend and requires ggml-converted models to perform inference. 
+This library presently utilizes the [ggml](https://github.com/ggerganov/ggml) backend, and necessitates ggml-converted models for inference. 
 
-You can find these models on the [HuggingfaceHub](https://huggingface.co/models?search=ggml) or in the "[Know-good-Models](https://github.com/rustformers/llm/blob/main/known-good-models.md)" list of the `rustformers/llm` repo.
+These converted models can be readily found on the [HuggingfaceHub](https://huggingface.co/models?search=ggml) or referenced in the "[Known-good-Models](https://github.com/rustformers/llm/blob/main/known-good-models.md)" list, curated in the `rustformers/llm` repository.
 
-All available model architectures can be accessed through the `llm_rs` module.
+Each model architecture can be conveniently loaded through the `llm_rs` module.
 
-Here's a simple illustration of how to load a MPT model (like [mpt-7b](https://huggingface.co/LLukas22/mpt-7b-ggml)):
+For instance, loading an MPT model (like [mpt-7b](https://huggingface.co/LLukas22/mpt-7b-ggml)) can be achieved as shown below:
 
 ```python
 from llm_rs import Mpt
 
 model = Mpt("path/to/model.bin")
 ```
+
+### Streamlined Model Loading 
+
+Models that have been converted or quantized using `llm-rs` include an additional `*.meta` file. This file enables streamlined loading via the `AutoModel` module. This feature is particularly advantageous as it allows you to load models without specifying the underlying architecture.
+
+The following is an illustrative example:
+
+```python
+from llm_rs import AutoModel
+
+model = AutoModel.load("path/to/model.bin")
+```
+
+In this streamlined approach, the `AutoModel` module automatically infers the architecture from the `*.meta` file associated with the model, providing an intuitive and straightforward method for loading your models.
 
 ### Text Generation
 
