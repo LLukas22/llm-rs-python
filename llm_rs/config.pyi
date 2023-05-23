@@ -1,17 +1,18 @@
 from typing import Optional,List
-from enum import Enum
+from enum import Enum, auto
 
 class ContainerType(Enum):
-    GGML=0,
-    GGJT=1,
+    GGML=auto(),
+    GGJT=auto(),
 
 class QuantizationType(Enum):
-    Q4_0=0,
-    Q4_1=1,
+    Q4_0=auto(),
+    Q4_1=auto(),
+    F16=auto(),
 
 class Precision(Enum):
-    FP32=0,
-    FP16=1,
+    FP32=auto(),
+    FP16=auto(),
     
 class GenerationConfig():
     """

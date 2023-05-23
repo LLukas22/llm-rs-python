@@ -3,7 +3,7 @@ use pyo3::prelude::*;
 use pyo3::types::PyTuple;
 
 use llm::{InferenceError, TokenUtf8Buffer};
-use llm_base::{InferenceFeedback, OutputRequest};
+use llm_base::{InferenceFeedback, OutputRequest, Prompt};
 
 use rand::prelude::*;
 use rand_chacha::ChaCha8Rng;
@@ -53,7 +53,7 @@ pub fn _generate(
         config_to_use.to_llm_params(session_config.threads, session_config.batch_size);
 
     let mut rng = ChaCha8Rng::seed_from_u64(config_to_use.seed);
-    let prompt = prompt.as_str();
+    let prompt = Prompt::from(&prompt);
 
     let mut session = model.start_session(session_params);
 
@@ -74,7 +74,7 @@ pub fn _generate(
     let mut output_request_feeding = OutputRequest::default();
     _py.allow_threads(|| {
         session
-            .feed_prompt::<Infallible>(
+            .feed_prompt::<Infallible, _>(
                 model,
                 &generation_params,
                 prompt,
@@ -196,7 +196,7 @@ macro_rules! wrap_model {
                 let lora_paths = lora_paths
                     .map(|strings| strings.into_iter().map(std::path::PathBuf::from).collect());
                 let model_params = llm_base::ModelParameters {
-                    n_context_tokens: config_to_use.context_length,
+                    context_size: config_to_use.context_length,
                     prefer_mmap: config_to_use.prefer_mmap,
                     lora_adapters: lora_paths.clone(),
                     ..Default::default()

@@ -17,11 +17,15 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
 ]
 keywords = ["LLM","Transformers"]
+dependencies =   [
+  "blake3",
+  "huggingface-hub >= 0.14.1",
+]
+
 
 [project.urls]
 repository = "https://github.com/LLukas22/llm-rs-python"
 documentation  = "https://llukas22.github.io/llm-rs-python/"
-
 
 [project.optional-dependencies]
 convert=[
@@ -30,7 +34,7 @@ convert=[
   "torch >= 2.0.0",
   "accelerate >= 0.19.0",
   "tqdm",
-  "huggingface-hub >= 0.14.1"
+  "einops >= 0.6.1"
 ]
 
 [tool.maturin]
