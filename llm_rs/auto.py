@@ -1,5 +1,4 @@
 from .config import QuantizationType,ContainerType,SessionConfig
-from pydantic import BaseModel
 import os
 import pathlib
 from .models import Mpt,GptNeoX,GptJ,Gpt2,Bloom,Llama
