@@ -376,7 +376,7 @@ class AutoQuantizer():
         model_type.quantize(model_file,target_file,quantization,container)
 
         metadata_file = pathlib.Path(target_file).with_suffix(".meta")
-        quantized_metadata = ModelMetadata(model=metadata.model,quantization=quantization,container=container,quantization_version=QuantizationVersions.V1)
+        quantized_metadata = ModelMetadata(model=metadata.model,quantization=quantization,container=container,quantization_version=QuantizationVersions.V2)
         quantized_metadata.add_hash(target_file)
         logging.info(f"Writing metadata file '{metadata_file}'")
         metadata_file.write_text(json.dumps(quantized_metadata.serialize()))

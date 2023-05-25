@@ -32,7 +32,7 @@ pub fn _quantize<M: llm::KnownModel + 'static>(
 ) -> Result<(), QuantizeError> {
     let container = match container {
         ContainerType::GGML => ggml::format::SaveContainerType::Ggml,
-        ContainerType::GGJT => ggml::format::SaveContainerType::GgjtV2,
+        ContainerType::GGJT => ggml::format::SaveContainerType::GgjtV3,
     };
 
     let quantization = match quantization {
