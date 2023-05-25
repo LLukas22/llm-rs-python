@@ -199,7 +199,6 @@ macro_rules! wrap_model {
                     context_size: config_to_use.context_length,
                     prefer_mmap: config_to_use.prefer_mmap,
                     lora_adapters: lora_paths.clone(),
-                    ..Default::default()
                 };
                 let llm_model: $llm_model =
                     llm_base::load(&path, model_params, None, |load_progress| {
