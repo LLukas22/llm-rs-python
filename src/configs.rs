@@ -2,6 +2,7 @@ use llm::{InferenceParameters, InferenceSessionConfig, ModelKVMemoryType, TokenB
 use pyo3::prelude::*;
 
 #[pyclass]
+#[derive(Clone)]
 pub struct GenerationConfig {
     #[pyo3(get, set)]
     pub top_k: usize,

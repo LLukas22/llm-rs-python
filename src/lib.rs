@@ -8,6 +8,7 @@ mod results;
 
 #[pymodule]
 fn llm_rs(_py: Python, m: &PyModule) -> PyResult<()> {
+
     let config_module = PyModule::new(_py, "config")?;
     config_module.add_class::<configs::GenerationConfig>()?;
     config_module.add_class::<configs::Precision>()?;
