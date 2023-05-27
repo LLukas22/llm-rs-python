@@ -38,7 +38,7 @@ convert=[
 ]
 
 langchain=[
-  langchain
+  "langchain"
 ]
 
 [tool.maturin]
