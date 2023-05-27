@@ -1,4 +1,4 @@
-from typing import Optional, Callable, List, Union
+from typing import Optional, Callable, List, Union, Generator
 from abc import ABC
 import os
 
@@ -34,6 +34,14 @@ class Model(ABC):
                  callback:Callable[[str],Optional[bool]]=None) -> GenerationResult: 
         """
         Generates text from a prompt.
+        """ 
+        ...
+
+    def stream(self,prompt:str,
+                 generation_config:Optional[GenerationConfig]=None,
+                 ) -> Generator[str,None,None]: 
+        """
+        Streams text from a prompt.
         """ 
         ...
     

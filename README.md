@@ -23,12 +23,26 @@ model = AutoModel.from_pretrained("path/to/model.bin",model_type=KnownModels.Lla
 #generate
 print(model.generate("The meaning of life is"))
 ```
+
+### Streaming Text
+Text can be yielded from a generator via the `stream` function:
+```python 
+from llm_rs import AutoModel, KnownModels
+
+#load the model
+model = AutoModel.from_pretrained("path/to/model.bin",model_type=KnownModels.Llama)
+
+#generate
+for token in model.stream("The meaning of life is"):
+    print(token)
+```
+
 ### Running GGML models from the Hugging Face Hub
 GGML converted models can be directly downloaded and run from the hub.
 ```python 
 from llm_rs import AutoModel
 
-model = AutoModel.from_pretrained("LLukas22/mpt-7b-ggml",model_file="mpt-7b-q4_0-ggjt.bin")
+model = AutoModel.from_pretrained("rustformers/mpt-7b-ggml",model_file="mpt-7b-q4_0-ggjt.bin")
 ```
 If there are multiple models in a repo the `model_file` has to be specified.
 If you want to load repositories which were not created throught this library, you have to specify the `model_type` parameter as the metadata files needed to infer the architecture are missing.

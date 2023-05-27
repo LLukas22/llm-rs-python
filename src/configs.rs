@@ -1,7 +1,9 @@
+use crate::stopwords::StopWordHandler;
 use llm::{InferenceParameters, InferenceSessionConfig, ModelKVMemoryType, TokenBias};
 use pyo3::prelude::*;
 
 #[pyclass]
+#[derive(Clone)]
 pub struct GenerationConfig {
     #[pyo3(get, set)]
     pub top_k: usize,
@@ -19,6 +21,7 @@ pub struct GenerationConfig {
     pub max_new_tokens: Option<usize>,
     #[pyo3(get, set)]
     pub stop_words: Option<Vec<String>>,
+    pub stop_word_handler: Option<StopWordHandler>,
 }
 
 impl Default for GenerationConfig {
@@ -32,6 +35,18 @@ impl Default for GenerationConfig {
             seed: 42,
             max_new_tokens: None,
             stop_words: None,
+            stop_word_handler: None,
+        }
+    }
+}
+
+impl GenerationConfig {
+    pub fn init_stop_words(&mut self, model: &dyn llm::Model) {
+        if self.stop_words.is_some() {
+            let stopwords = self.stop_words.clone().unwrap();
+            self.stop_word_handler = Some(StopWordHandler::new(model, &stopwords));
+        } else {
+            self.stop_word_handler = None;
         }
     }
 }
@@ -59,6 +74,7 @@ impl GenerationConfig {
             seed: seed.unwrap_or(42),
             max_new_tokens,
             stop_words,
+            stop_word_handler: None,
         }
     }
 }

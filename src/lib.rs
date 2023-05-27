@@ -5,6 +5,7 @@ mod model_base;
 mod models;
 mod quantize;
 mod results;
+mod stopwords;
 
 #[pymodule]
 fn llm_rs(_py: Python, m: &PyModule) -> PyResult<()> {
