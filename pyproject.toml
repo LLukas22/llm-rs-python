@@ -37,5 +37,9 @@ convert=[
   "einops >= 0.6.1"
 ]
 
+langchain=[
+  langchain
+]
+
 [tool.maturin]
 features = ["pyo3/extension-module"]

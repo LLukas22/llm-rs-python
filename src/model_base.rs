@@ -11,16 +11,21 @@ use rand::prelude::*;
 use rand_chacha::ChaCha8Rng;
 
 use std::convert::Infallible;
+use std::sync::Mutex;
 
 use crate::configs;
+use crate::configs::GenerationConfig;
 use crate::results;
 use std::sync::Arc;
 
 #[pyclass]
 pub struct GenerationStreamer {
-    pub config: InferenceParameters,
-    pub session: Box<InferenceSession>,
-    pub rng: ChaCha8Rng,
+    #[pyo3(get)]
+    pub counter: usize,
+    pub inference_params: Arc<InferenceParameters>,
+    pub generation_config: Arc<Mutex<configs::GenerationConfig>>,
+    pub session: Arc<Mutex<InferenceSession>>,
+    pub rng: Arc<Mutex<ChaCha8Rng>>,
     pub model: Arc<dyn llm::Model>,
 }
 
@@ -33,20 +38,37 @@ impl GenerationStreamer {
     fn __next__(mut slf: PyRefMut<'_, Self>, _py: Python) -> Result<Option<String>, PyErr> {
         let mut output_request = OutputRequest::default();
 
-        let config = slf.config.clone();
-        let mut rng = slf.rng.clone();
+        let inference_params = Arc::clone(&slf.inference_params);
+        let generation_config_ref = Arc::clone(&slf.generation_config);
+        let rng_ref = Arc::clone(&slf.rng);
         let model = Arc::clone(&slf.model);
-        let session = slf.session.as_mut();
+        let session_ref = Arc::clone(&slf.session);
         let mut utf8_buf = TokenUtf8Buffer::new();
 
         loop {
+            let generation_config = generation_config_ref.lock().unwrap();
+            //Check if we have reached the maximum token count
+            if generation_config.max_new_tokens.is_some()
+                && slf.counter >= generation_config.max_new_tokens.unwrap()
+            {
+                return Ok(None);
+            }
+            //Forcefully drop the lock
+            std::mem::drop(generation_config);
+
             let mut token: Option<String> = None;
 
             _py.allow_threads(|| {
+                //Acquire locks in the _py context
+                let mut session = session_ref.lock().unwrap();
+                let mut rng = rng_ref.lock().unwrap();
+                let mut generation_config = generation_config_ref.lock().unwrap();
+
                 token = _infer_next_token(
-                    session,
+                    &mut session,
                     &*model,
-                    &config,
+                    &inference_params,
+                    &mut generation_config,
                     &mut output_request,
                     &mut rng,
                     &mut utf8_buf,
@@ -57,6 +79,8 @@ impl GenerationStreamer {
             if token.is_none() {
                 return Ok(None);
             }
+            //Increase counter
+            slf.counter += 1;
 
             if let Some(token) = token {
                 return Ok(Some(token));
@@ -101,13 +125,15 @@ pub fn _start_session<'a>(
 ) {
     let session_params = session_config.to_llm_params();
     //Build the correct generation parameters
-    let config_to_use = generation_config.unwrap_or(configs::GenerationConfig::default());
+    let mut config_to_use = generation_config.unwrap_or(configs::GenerationConfig::default());
 
     let generation_params =
         config_to_use.to_llm_params(session_config.threads, session_config.batch_size);
 
     let rng = ChaCha8Rng::seed_from_u64(config_to_use.seed);
     let prompt = Prompt::from(prompt);
+
+    config_to_use.init_stop_words(model);
 
     let session = model.start_session(session_params);
     (config_to_use, generation_params, rng, prompt, session)
@@ -117,6 +143,7 @@ pub fn _infer_next_token(
     session: &mut InferenceSession,
     model: &dyn llm::Model,
     infernece_params: &InferenceParameters,
+    generation_params: &mut GenerationConfig,
     output_request: &mut OutputRequest,
     rng: &mut ChaCha8Rng,
     utf8_buf: &mut TokenUtf8Buffer,
@@ -127,6 +154,14 @@ pub fn _infer_next_token(
             Err(InferenceError::EndOfText) => return Ok(None),
             Err(e) => return Err(PyException::new_err(e.to_string())),
         };
+
+        //Check if the token is a stop word
+        if let Some(stop_word_handler) = &mut generation_params.stop_word_handler {
+            if stop_word_handler.process(token.to_vec()) {
+                return Ok(None);
+            }
+        }
+
         //Buffer until a valid utf8 sequence is found
         if let Some(s) = utf8_buf.push(token) {
             return Ok(Some(s));
@@ -142,7 +177,7 @@ pub fn _generate(
     generation_config: Option<configs::GenerationConfig>,
     callback: Option<PyObject>,
 ) -> Result<results::GenerationResult, PyErr> {
-    let (config_to_use, generation_params, mut rng, prompt, mut session) =
+    let (mut generation_config, inference_params, mut rng, prompt, mut session) =
         _start_session(model, session_config, &prompt, generation_config);
 
     //Extract the callback function from the python object
@@ -164,7 +199,7 @@ pub fn _generate(
         session
             .feed_prompt::<Infallible, _>(
                 model,
-                &generation_params,
+                &inference_params,
                 prompt,
                 &mut output_request_feeding,
                 |_| Ok(InferenceFeedback::Continue),
@@ -186,8 +221,8 @@ pub fn _generate(
 
     loop {
         //Check if we have reached the maximum token count
-        if config_to_use.max_new_tokens.is_some()
-            && tokens_processed >= config_to_use.max_new_tokens.unwrap()
+        if generation_config.max_new_tokens.is_some()
+            && tokens_processed >= generation_config.max_new_tokens.unwrap()
         {
             stop_reason = results::StopReason::MaxLength;
             break;
@@ -199,7 +234,8 @@ pub fn _generate(
             token = _infer_next_token(
                 &mut session,
                 model,
-                &generation_params,
+                &inference_params,
+                &mut generation_config,
                 &mut output_request_generation,
                 &mut rng,
                 &mut token_utf8_buf,
@@ -329,7 +365,7 @@ macro_rules! wrap_model {
                 prompt: String,
                 generation_config: Option<crate::configs::GenerationConfig>,
             ) -> PyResult<crate::model_base::GenerationStreamer> {
-                let (config_to_use, generation_params, rng, prompt, mut session) =
+                let (generation_config, inference_params, rng, prompt, mut session) =
                     crate::model_base::_start_session(
                         self.llm_model.as_ref(),
                         &self.config,
@@ -343,7 +379,7 @@ macro_rules! wrap_model {
                     session
                         .feed_prompt::<std::convert::Infallible, _>(
                             self.llm_model.as_ref(),
-                            &generation_params,
+                            &inference_params,
                             prompt,
                             &mut output_request_feeding,
                             |_| Ok(llm_base::InferenceFeedback::Continue),
@@ -352,10 +388,14 @@ macro_rules! wrap_model {
                 });
 
                 Ok(crate::model_base::GenerationStreamer {
-                    config: generation_params,
-                    session: Box::new(session),
-                    rng: rng,
+                    generation_config: std::sync::Arc::new(std::sync::Mutex::new(
+                        generation_config,
+                    )),
+                    inference_params: std::sync::Arc::new(inference_params),
+                    session: std::sync::Arc::new(std::sync::Mutex::new(session)),
+                    rng: std::sync::Arc::new(std::sync::Mutex::new(rng)),
                     model: self.llm_model.clone(),
+                    counter: 0,
                 })
             }
 
