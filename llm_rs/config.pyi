@@ -8,6 +8,9 @@ class ContainerType(Enum):
 class QuantizationType(Enum):
     Q4_0=auto(),
     Q4_1=auto(),
+    Q5_0=auto(),
+    Q5_1=auto(),
+    Q8_0=auto(),
     F16=auto(),
 
 class Precision(Enum):
