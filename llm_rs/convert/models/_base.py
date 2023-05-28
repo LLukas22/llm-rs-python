@@ -7,7 +7,7 @@ from enum import Enum
 import logging
 import numpy as np
 from ...config import QuantizationType,ContainerType
-from ...auto import ModelMetadata, KnownModels
+from ...auto import ModelMetadata, KnownModels, QuantizationVersions
 import pathlib
 import json
 import torch
@@ -26,6 +26,7 @@ class BaseAdapter(ABC):
     version:int=1
 
     def  __init__(self,pretrained_model_name_or_path:Union[str,os.PathLike],pretrained_tokenizer_name_or_path:Optional[Union[str,os.PathLike]]=None) -> None:
+        self.pretrained_model_name_or_path = pretrained_model_name_or_path
         self.config,self.tokenizer,self.model= self.load(pretrained_model_name_or_path,pretrained_tokenizer_name_or_path)
 
     @abstractmethod
@@ -140,13 +141,14 @@ class BaseAdapter(ABC):
         #Create the *.meta file needed for automatic loading
         metadata_file = pathlib.Path(output_file).with_suffix(".meta")
         metadata = ModelMetadata(
-            self.model_type,
-            QuantizationType.F16,
-            ContainerType.GGML
+            model = self.model_type,
+            quantization = QuantizationType.F16,
+            container = ContainerType.GGML,
+            quantization_version=QuantizationVersions.Not_Quantized,
+            base_model=str(self.pretrained_model_name_or_path),
             )
         metadata.add_hash(output_file)
         metadata_file.write_text(json.dumps(metadata.serialize(),indent=4))
         
         logging.info(f"Created metadata file at '{output_file}'")
-        return output_file
 

@@ -4,7 +4,7 @@ import pathlib
 from .models import Mpt,GptNeoX,GptJ,Gpt2,Bloom,Llama
 from .base_model import Model
 import logging
-from typing import Optional, List, Union,Type
+from typing import Optional, List, Union,Type,Dict
 import os
 from enum import Enum, auto
 from dataclasses import dataclass
@@ -31,6 +31,9 @@ class KnownModels(Enum):
 _QUANTIZATION_TYPE_MAP = {
     "Q4_0": QuantizationType.Q4_0,
     "Q4_1": QuantizationType.Q4_1,
+    "Q5_0": QuantizationType.Q5_0,
+    "Q5_1": QuantizationType.Q5_1,
+    "Q8_0": QuantizationType.Q8_0,
     "F16": QuantizationType.F16
 }
 
@@ -48,6 +51,7 @@ _KNOWN_MODELS_MAP = {
     KnownModels.Llama: Llama
 }
 
+CURRENT_QUANTIZATION_VERSION = QuantizationVersions.V2
 
 class PathType(Enum):
     DIR = auto()
@@ -62,7 +66,7 @@ def _get_path_type(path: Union[str,os.PathLike]) -> PathType:
     elif p.is_dir():
         return PathType.DIR
     try:
-        validate_repo_id(path)
+        validate_repo_id(str(path))
         return PathType.REPO
     except HFValidationError:
         pass
@@ -80,6 +84,7 @@ class ModelMetadata():
     quantization_version: QuantizationVersions=QuantizationVersions.Not_Quantized
     converter:str="llm-rs"
     hash:Optional[str]=None
+    base_model:Optional[str]=None
 
     def add_hash(self,model_path:Union[str,os.PathLike]):
         h  = blake3(max_threads=blake3.AUTO)
@@ -97,18 +102,20 @@ class ModelMetadata():
             "quantization_version": self.quantization_version.name,
             "container": repr(self.container).split(".")[-1],
             "converter": self.converter,
-            "hash": self.hash
+            "hash": self.hash,
+            "base_model": self.base_model
         }
     
     @staticmethod
-    def deserialize(metadata_dict):
+    def deserialize(metadata_dict:Dict[str,str])->"ModelMetadata":
         return ModelMetadata(
             model = KnownModels[metadata_dict["model"]],
             quantization = _QUANTIZATION_TYPE_MAP[metadata_dict["quantization"]],
             quantization_version= QuantizationVersions[metadata_dict["quantization_version"]],
             container = _CONTAINER_TYPE_MAP[metadata_dict["container"]],
             converter = metadata_dict["converter"],
-            hash = metadata_dict["hash"]
+            hash = metadata_dict.get("hash"),
+            base_model = metadata_dict.get("base_model")
         )
 
 
@@ -134,9 +141,9 @@ class AutoConfig():
         
         auto_config = AutoConfig()
         if path_type == PathType.DIR:
-            cls._update_from_dir(model_path_or_repo_id, auto_config)
+            cls._update_from_dir(str(model_path_or_repo_id), auto_config)
         elif path_type == PathType.REPO:
-            cls._update_from_repo(model_path_or_repo_id, auto_config)
+            cls._update_from_repo(str(model_path_or_repo_id), auto_config)
 
         return auto_config
 
@@ -151,11 +158,11 @@ class AutoConfig():
 
     @classmethod
     def _update_from_dir(cls, path: str, auto_config: 'AutoConfig') -> None:
-        path = (pathlib.Path(path) / 'config.json').resolve()
-        if path.is_file():
-            cls._update_from_file(path, auto_config)
+        resolved_path = (pathlib.Path(path) / 'config.json').resolve()
+        if resolved_path.is_file():
+            cls._update_from_file(str(resolved_path), auto_config)
         else:
-            raise ValueError(f"Config path '{path}' doesn't exist.")
+            raise ValueError(f"Config path '{resolved_path}' doesn't exist.")
 
     @classmethod
     def _update_from_file(cls, path: str, auto_config: 'AutoConfig') -> None:
@@ -241,12 +248,15 @@ class AutoModel():
                     logging.warning("Found normal HuggingFace model, starting conversion...")
                     return cls.from_transformer(model_path_or_repo_id, session_config, lora_paths, verbose, default_quantization, default_container)
             
-                resolved_path = cls._find_model_path_from_repo(model_path_or_repo_id,model_file)
+                resolved_path = cls._find_model_path_from_repo(str(model_path_or_repo_id),model_file)
                 return cls.from_file(resolved_path,model_type,session_config,lora_paths,verbose)
             
             elif path_type == PathType.DIR:
-                resolved_path = cls._find_model_path_from_dir(model_path_or_repo_id,model_file)
+                resolved_path = cls._find_model_path_from_dir(str(model_path_or_repo_id),model_file)
                 return cls.from_file(resolved_path,model_type,session_config,lora_paths,verbose)
+            
+            else:
+                raise ValueError(f"Unknown path type '{path_type}'")
 
 
     @classmethod
@@ -333,6 +343,15 @@ class AutoModel():
             converted_model = AutoQuantizer.quantize(converted_model,quantization=default_quantization,container=default_container)
         return cls.from_file(converted_model,None,session_config,lora_paths,verbose)
     
+# Hack to make the quantization type enum hashable
+_APPENDIX_MAP = {
+    QuantizationType.Q4_0.__repr__(): "q4_0",
+    QuantizationType.Q4_1.__repr__(): "q4_1",
+    QuantizationType.Q5_0.__repr__(): "q5_0",
+    QuantizationType.Q5_1.__repr__(): "q5_1",
+    QuantizationType.Q8_0.__repr__(): "q8_0",
+}
+
 class AutoQuantizer():
     """
     Utility to quantize models, without having to specify the model type.
@@ -351,15 +370,14 @@ class AutoQuantizer():
         def build_target_name()->str:
             output_path = pathlib.Path(target_path)
             if output_path.is_file():
-                return output_path
+                return str(output_path)
             else:
                 output_path.mkdir(parents=True,exist_ok=True)
                 model_path = pathlib.Path(model_file)
                 appendix = ""
-                if  quantization == QuantizationType.Q4_0:
-                    appendix += "-q4_0"
-                elif quantization == QuantizationType.Q4_1:
-                    appendix += "-q4_1"
+
+                if quantization.__repr__() in _APPENDIX_MAP:
+                    appendix += f"-{_APPENDIX_MAP[quantization.__repr__()]}"
 
                 if container == ContainerType.GGJT:
                     appendix += "-ggjt"
@@ -373,13 +391,13 @@ class AutoQuantizer():
             return target_file
         
         logging.info(f"Quantizing model '{model_file}' to '{target_file}'")
-        model_type.quantize(model_file,target_file,quantization,container)
+        model_type.quantize(str(model_file),target_file,quantization,container)
 
         metadata_file = pathlib.Path(target_file).with_suffix(".meta")
-        quantized_metadata = ModelMetadata(model=metadata.model,quantization=quantization,container=container,quantization_version=QuantizationVersions.V2)
+        quantized_metadata = ModelMetadata(model=metadata.model,quantization=quantization,container=container,quantization_version=CURRENT_QUANTIZATION_VERSION,base_model=metadata.base_model)
         quantized_metadata.add_hash(target_file)
         logging.info(f"Writing metadata file '{metadata_file}'")
-        metadata_file.write_text(json.dumps(quantized_metadata.serialize()))
+        metadata_file.write_text(json.dumps(quantized_metadata.serialize(),indent=4))
         logging.info(f"Finished quantizing model '{model_file}' to '{target_file}'")
         return target_file
 

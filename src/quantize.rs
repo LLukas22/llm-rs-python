@@ -21,6 +21,9 @@ pub enum ContainerType {
 pub enum QuantizationType {
     Q4_0,
     Q4_1,
+    Q5_0,
+    Q5_1,
+    Q8_0,
     F16,
 }
 
@@ -38,6 +41,9 @@ pub fn _quantize<M: llm::KnownModel + 'static>(
     let quantization = match quantization {
         QuantizationType::Q4_0 => Ok(ggml::Type::Q4_0),
         QuantizationType::Q4_1 => Ok(ggml::Type::Q4_1),
+        QuantizationType::Q5_0 => Ok(ggml::Type::Q5_0),
+        QuantizationType::Q5_1 => Ok(ggml::Type::Q5_1),
+        QuantizationType::Q8_0 => Ok(ggml::Type::Q8_0),
         QuantizationType::F16 => Err(QuantizeError::UnsupportedElementType {
             element_type: ggml::Type::F16,
         }),
