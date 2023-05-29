@@ -1,6 +1,6 @@
 [package]
 name = "llm-rs"
-version = "0.2.7"
+version = "0.2.8"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
@@ -13,6 +13,6 @@ pyo3 = "0.18.3"
 rand = "0.8.5"
 rand_chacha = "0.3.1"
 log  =  "0.4.17"
-llm = { git = "https://github.com/rustformers/llm.git" }
-llm-base = { git = "https://github.com/rustformers/llm.git" }
-ggml = { git = "https://github.com/rustformers/llm.git" }
+llm = { git = "https://github.com/rustformers/llm.git", rev="ccdd2ab"  }
+llm-base = { git = "https://github.com/rustformers/llm.git",rev="ccdd2ab" }
+ggml = { git = "https://github.com/rustformers/llm.git",rev="ccdd2ab" }
