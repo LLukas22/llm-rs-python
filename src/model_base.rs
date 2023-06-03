@@ -22,7 +22,7 @@ use std::sync::Arc;
 pub struct GenerationStreamer {
     #[pyo3(get)]
     pub counter: usize,
-    pub inference_params: Arc<InferenceParameters>,
+    pub inference_params:  Arc<InferenceParameters>,
     pub generation_config: Arc<Mutex<configs::GenerationConfig>>,
     pub session: Arc<Mutex<InferenceSession>>,
     pub rng: Arc<Mutex<ChaCha8Rng>>,
@@ -89,7 +89,7 @@ impl GenerationStreamer {
     }
 }
 
-pub fn _tokenize(model: &dyn llm::Model, text: &str) -> Result<Vec<i32>, InferenceError> {
+pub fn _tokenize(model: &dyn llm::Model, text: &str) -> Result<Vec<u32>, InferenceError> {
     Ok(model
         .vocabulary()
         .tokenize(text, false)?
@@ -98,12 +98,9 @@ pub fn _tokenize(model: &dyn llm::Model, text: &str) -> Result<Vec<i32>, Inferen
         .collect())
 }
 
-pub fn _decode(model: &dyn llm::Model, tokens: Vec<i32>) -> Result<String, std::str::Utf8Error> {
+pub fn _decode(model: &dyn llm::Model, tokens: Vec<u32>) -> Result<String, std::str::Utf8Error> {
     let vocab = model.vocabulary();
-    let characters: Vec<u8> = tokens
-        .into_iter()
-        .flat_map(|token| vocab.id_to_token[token as usize].to_owned())
-        .collect();
+    let characters: Vec<u8> = vocab.decode(tokens, false);
 
     match std::str::from_utf8(&characters) {
         Ok(text) => Ok(text.to_string()),
@@ -163,7 +160,7 @@ pub fn _infer_next_token(
         }
 
         //Buffer until a valid utf8 sequence is found
-        if let Some(s) = utf8_buf.push(token) {
+        if let Some(s) = utf8_buf.push(&token) {
             return Ok(Some(s));
         }
     }
@@ -320,8 +317,10 @@ macro_rules! wrap_model {
                     prefer_mmap: config_to_use.prefer_mmap,
                     lora_adapters: lora_paths.clone(),
                 };
+
+                let vocabulary_source = llm_base::VocabularySource::Model;
                 let llm_model: $llm_model =
-                    llm_base::load(&path, model_params, None, |load_progress| {
+                    llm_base::load(&path,vocabulary_source ,model_params, |load_progress| {
                         if should_log {
                             llm_base::load_progress_callback_stdout(load_progress)
                         }
@@ -399,14 +398,14 @@ macro_rules! wrap_model {
                 })
             }
 
-            fn tokenize(&self, text: String) -> PyResult<Vec<i32>> {
+            fn tokenize(&self, text: String) -> PyResult<Vec<u32>> {
                 match crate::model_base::_tokenize(self.llm_model.as_ref(), &text) {
                     Ok(tokens) => Ok(tokens),
                     Err(e) => Err(pyo3::exceptions::PyException::new_err(e.to_string())),
                 }
             }
 
-            fn decode(&self, tokens: Vec<i32>) -> PyResult<String> {
+            fn decode(&self, tokens: Vec<u32>) -> PyResult<String> {
                 match crate::model_base::_decode(self.llm_model.as_ref(), tokens) {
                     Ok(tokens) => Ok(tokens),
                     Err(e) => Err(pyo3::exceptions::PyException::new_err(e.to_string())),

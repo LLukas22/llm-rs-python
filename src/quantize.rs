@@ -49,12 +49,15 @@ pub fn _quantize<M: llm::KnownModel + 'static>(
         }),
     }?;
 
-    let mut source = BufReader::new(std::fs::File::open(source)?);
-    let mut destination = BufWriter::new(std::fs::File::create(destination)?);
+    let mut source_reader = BufReader::new(std::fs::File::open(&source)?);
+    let mut destination_reader = BufWriter::new(std::fs::File::create(destination)?);
+    let vocabulary = llm::VocabularySource::Model.retrieve(&source).unwrap();
 
+    
     quantize::<M, _, _>(
-        &mut source,
-        &mut destination,
+        &mut source_reader,
+        &mut destination_reader,
+        vocabulary,
         container,
         quantization,
         |progress| match progress {
