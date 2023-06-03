@@ -84,14 +84,14 @@ impl GenerationConfig {
         InferenceParameters {
             n_threads,
             n_batch,
-            sampler:std::sync::Arc::new(llm::samplers::TopPTopK{
+            sampler: std::sync::Arc::new(llm::samplers::TopPTopK {
                 top_k: self.top_k,
                 top_p: self.top_p,
                 temperature: self.temperature,
                 repeat_penalty: self.repetition_penalty,
                 repetition_penalty_last_n: self.repetition_penalty_last_n,
                 bias_tokens: TokenBias::default(),
-            })
+            }),
         }
     }
 }

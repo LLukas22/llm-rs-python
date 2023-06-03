@@ -22,7 +22,7 @@ use std::sync::Arc;
 pub struct GenerationStreamer {
     #[pyo3(get)]
     pub counter: usize,
-    pub inference_params:  Arc<InferenceParameters>,
+    pub inference_params: Arc<InferenceParameters>,
     pub generation_config: Arc<Mutex<configs::GenerationConfig>>,
     pub session: Arc<Mutex<InferenceSession>>,
     pub rng: Arc<Mutex<ChaCha8Rng>>,
@@ -300,6 +300,7 @@ macro_rules! wrap_model {
             fn new(
                 path: String,
                 session_config: Option<crate::configs::SessionConfig>,
+                tokenizer_name_or_path: Option<String>,
                 lora_paths: Option<Vec<String>>,
                 verbose: Option<bool>,
             ) -> Self {
@@ -318,9 +319,26 @@ macro_rules! wrap_model {
                     lora_adapters: lora_paths.clone(),
                 };
 
-                let vocabulary_source = llm_base::VocabularySource::Model;
+                let vocabulary_source: llm_base::VocabularySource;
+
+                if let Some(name_or_path) = tokenizer_name_or_path {
+                    let tokenizer_path = std::path::Path::new(&name_or_path);
+                    if tokenizer_path.is_file() && tokenizer_path.exists() {
+                        // Load tokenizer from file
+                        vocabulary_source = llm_base::VocabularySource::HuggingFaceTokenizerFile(
+                            tokenizer_path.to_owned(),
+                        );
+                    } else {
+                        // Load tokenizer from HuggingFace
+                        vocabulary_source =
+                            llm_base::VocabularySource::HuggingFaceRemote(name_or_path);
+                    }
+                } else {
+                    vocabulary_source = llm_base::VocabularySource::Model;
+                }
+
                 let llm_model: $llm_model =
-                    llm_base::load(&path,vocabulary_source ,model_params, |load_progress| {
+                    llm_base::load(&path, vocabulary_source, model_params, |load_progress| {
                         if should_log {
                             llm_base::load_progress_callback_stdout(load_progress)
                         }
@@ -421,7 +439,6 @@ macro_rules! wrap_model {
                 container: Option<crate::quantize::ContainerType>,
                 callback: Option<PyObject>,
             ) -> PyResult<()> {
-
                 let mut callback_function: Option<&PyAny> = None;
                 let pytohn_object: Py<PyAny>;
 
@@ -442,7 +459,7 @@ macro_rules! wrap_model {
                             let args = pyo3::types::PyTuple::new(_py, &[message]);
                             callback.call1(args).unwrap();
                         }
-                    }
+                    },
                 )
                 .map_err(|e| pyo3::exceptions::PyException::new_err(e.to_string()))
             }

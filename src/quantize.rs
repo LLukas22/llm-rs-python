@@ -54,7 +54,6 @@ pub fn _quantize<M: llm::KnownModel + 'static>(
     let mut destination_reader = BufWriter::new(std::fs::File::create(destination)?);
     let vocabulary = llm::VocabularySource::Model.retrieve(&source).unwrap();
 
-    
     quantize::<M, _, _>(
         &mut source_reader,
         &mut destination_reader,
@@ -62,16 +61,20 @@ pub fn _quantize<M: llm::KnownModel + 'static>(
         container,
         quantization,
         |progress| match progress {
-            QuantizeProgress::HyperparametersLoaded => progress_callback("Loaded hyperparameters".to_string()),
+            QuantizeProgress::HyperparametersLoaded => {
+                progress_callback("Loaded hyperparameters".to_string())
+            }
             QuantizeProgress::TensorLoading {
                 name,
                 dims,
                 element_type,
                 n_elements,
-            } =>  progress_callback(format!(
+            } => progress_callback(format!(
                 "Loading tensor `{name}` ({n_elements} ({dims:?}) {element_type} elements)"
             )),
-            QuantizeProgress::TensorQuantizing { name } => progress_callback(format!("Quantizing tensor `{name}`")),
+            QuantizeProgress::TensorQuantizing { name } => {
+                progress_callback(format!("Quantizing tensor `{name}`"))
+            }
             QuantizeProgress::TensorQuantized {
                 name,
                 original_size,

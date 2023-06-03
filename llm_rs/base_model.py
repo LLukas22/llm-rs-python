@@ -26,6 +26,7 @@ class Model(ABC):
     def  __init__(self,
                   path:Union[str,os.PathLike],
                   session_config:SessionConfig=SessionConfig(),
+                  tokenizer_name_or_path:Optional[Union[str,os.PathLike]]=None,
                   lora_paths:Optional[List[Union[str,os.PathLike]]]=None,
                   verbose:bool=False) -> None: ...
     
