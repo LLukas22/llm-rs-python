@@ -4,7 +4,7 @@ import pathlib
 from .models import Mpt,GptNeoX,GptJ,Gpt2,Bloom,Llama
 from .base_model import Model
 import logging
-from typing import Optional, List, Union,Type,Dict
+from typing import Optional, List, Union,Type,Dict, Callable
 import os
 from enum import Enum, auto
 from dataclasses import dataclass
@@ -357,7 +357,13 @@ class AutoQuantizer():
     Utility to quantize models, without having to specify the model type.
     """
     @staticmethod
-    def quantize(model_file:Union[str,os.PathLike],target_path:Optional[Union[str,os.PathLike]]=None,quantization:QuantizationType=QuantizationType.Q4_0,container:ContainerType=ContainerType.GGJT)->Union[str,os.PathLike]:
+    def quantize(
+        model_file:Union[str,os.PathLike],
+        target_path:Optional[Union[str,os.PathLike]]=None,
+        quantization:QuantizationType=QuantizationType.Q4_0,
+        container:ContainerType=ContainerType.GGJT,
+        callback:Optional[Callable[[str],None]]=None
+        )->Union[str,os.PathLike]:
         metadata=AutoModel.load_metadata(model_file)
         if metadata.quantization != QuantizationType.F16:
             raise ValueError(f"Model '{model_file}' is already quantized to '{metadata.quantization}'")
@@ -391,7 +397,7 @@ class AutoQuantizer():
             return target_file
         
         logging.info(f"Quantizing model '{model_file}' to '{target_file}'")
-        model_type.quantize(str(model_file),target_file,quantization,container)
+        model_type.quantize(str(model_file),target_file,quantization,container,callback=callback)
 
         metadata_file = pathlib.Path(target_file).with_suffix(".meta")
         quantized_metadata = ModelMetadata(model=metadata.model,quantization=quantization,container=container,quantization_version=CURRENT_QUANTIZATION_VERSION,base_model=metadata.base_model)

@@ -414,16 +414,35 @@ macro_rules! wrap_model {
 
             #[staticmethod]
             fn quantize(
+                _py: Python,
                 source: String,
                 destination: String,
                 quantization: Option<crate::quantize::QuantizationType>,
                 container: Option<crate::quantize::ContainerType>,
+                callback: Option<PyObject>,
             ) -> PyResult<()> {
+
+                let mut callback_function: Option<&PyAny> = None;
+                let pytohn_object: Py<PyAny>;
+
+                if let Some(unwrapped) = callback {
+                    pytohn_object = unwrapped;
+                    let python_function = pytohn_object.as_ref(_py);
+                    callback_function = Some(python_function);
+                    assert!(python_function.is_callable(), "Callback is not callable!");
+                }
+
                 crate::quantize::_quantize::<$llm_model>(
                     source.into(),
                     destination.into(),
                     container.unwrap_or(crate::quantize::ContainerType::GGJT),
                     quantization.unwrap_or(crate::quantize::QuantizationType::Q4_0),
+                    |message| {
+                        if let Some(callback) = callback_function {
+                            let args = pyo3::types::PyTuple::new(_py, &[message]);
+                            callback.call1(args).unwrap();
+                        }
+                    }
                 )
                 .map_err(|e| pyo3::exceptions::PyException::new_err(e.to_string()))
             }

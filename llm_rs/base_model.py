@@ -31,7 +31,7 @@ class Model(ABC):
     
     def generate(self,prompt:str,
                  generation_config:Optional[GenerationConfig]=None,
-                 callback:Callable[[str],Optional[bool]]=None) -> GenerationResult: 
+                 callback:Optional[Callable[[str],Optional[bool]]]=None) -> GenerationResult: 
         """
         Generates text from a prompt.
         """ 
@@ -58,7 +58,7 @@ class Model(ABC):
         ...
 
     @staticmethod
-    def quantize(source:str,destination:str,quantization:QuantizationType=QuantizationType.Q4_0,container:ContainerType=ContainerType.GGJT)->None:
+    def quantize(source:str,destination:str,quantization:QuantizationType=QuantizationType.Q4_0,container:ContainerType=ContainerType.GGJT,callback:Optional[Callable[[str],None]]=None)->None:
         """
         Quantizes the model.
         """
