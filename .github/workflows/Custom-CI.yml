@@ -3,7 +3,7 @@
 #
 #    maturin generate-ci --zig github
 #
-name: CI
+name: CI-Custom
 
 on:
   push:
@@ -23,7 +23,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        target: [x86_64, x86, aarch64, armv7]
+        target: [x86_64-pc-windows-gnu,i686-pc-windows-gnu,x86_64-unknown-linux-gnu,i686-unknown-linux-gnu,aarch64-unknown-linux-gnu,aarch64-apple-darwin,x86_64-apple-darwin]
     steps:
       - name: Insatll openssl
         run: sudo apt-get -y install openssl libssl-dev
@@ -34,7 +34,7 @@ jobs:
 
       - name: Install maturin
         run: pip install maturin[zig]
-        
+
       - name: Build wheels
         run: maturin build --release --out dist --find-interpreter --zig --target ${{ matrix.target }} 
 
