@@ -38,8 +38,7 @@ impl StopWordHandler {
                     .tokenize(word, false)
                     .unwrap()
                     .iter()
-                    .flat_map(|(encoding, _)| *encoding)
-                    .copied()
+                    .flat_map(|(encoding, _)| encoding.to_owned())
                     .collect::<Vec<u8>>()
             })
             .collect();

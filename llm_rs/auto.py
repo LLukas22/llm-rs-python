@@ -4,7 +4,7 @@ import pathlib
 from .models import Mpt,GptNeoX,GptJ,Gpt2,Bloom,Llama
 from .base_model import Model
 import logging
-from typing import Optional, List, Union,Type,Dict
+from typing import Optional, List, Union,Type,Dict, Callable
 import os
 from enum import Enum, auto
 from dataclasses import dataclass
@@ -209,11 +209,20 @@ class AutoModel():
     def from_file(cls, path:Union[str,os.PathLike],
                   model_type: Optional[KnownModels] = None,
                   session_config:SessionConfig=SessionConfig(),
+                  tokenizer_path_or_repo_id: Optional[Union[str,os.PathLike]]=None,
                   lora_paths:Optional[List[Union[str,os.PathLike]]]=None,
-                  verbose:bool=False)->Model:
+                  verbose:bool=False,
+                  use_hf_tokenizer:bool=True)->Model:
         
+        tokenizer = tokenizer_path_or_repo_id
+        if use_hf_tokenizer and tokenizer is None:
+            metadata = cls.load_metadata(path)
+            tokenizer = metadata.base_model
+            if tokenizer is None or tokenizer == "":
+                raise ValueError(f"Model file '{path}' does not have a base_model specified in its metadata file but wants to use a huggingface-tokenizer! Please specify a base_model or expilicitly specify a tokenizer via `tokenizer_path_or_repo_id`.")
+
         model = cls._infer_model_type(path,model_type)
-        return model(path,session_config,lora_paths,verbose)
+        return model(path,session_config,tokenizer_path_or_repo_id,lora_paths,verbose)
     
     @classmethod
     def from_pretrained(cls,
@@ -221,8 +230,10 @@ class AutoModel():
         model_file: Optional[str] = None,
         model_type: Optional[KnownModels] = None,
         session_config:SessionConfig=SessionConfig(),
+        tokenizer_path_or_repo_id: Optional[Union[str,os.PathLike]]=None,
         lora_paths:Optional[List[Union[str,os.PathLike]]]=None,
         verbose:bool=False,
+        use_hf_tokenizer:bool=True,
         default_quantization:QuantizationType=QuantizationType.Q4_0,
         default_container:ContainerType=ContainerType.GGJT)->Model:
 
@@ -231,7 +242,7 @@ class AutoModel():
         if path_type == PathType.UNKNOWN:
             raise ValueError(f"Unknown path type for '{model_path_or_repo_id}'")
         elif path_type == PathType.FILE:
-            return cls.from_file(model_path_or_repo_id,model_type,session_config,lora_paths,verbose)
+            return cls.from_file(model_path_or_repo_id,model_type,session_config,tokenizer_path_or_repo_id,lora_paths,verbose,use_hf_tokenizer)
         else:
             if path_type == PathType.REPO:
 
@@ -246,14 +257,14 @@ class AutoModel():
 
                 if config.repo_type != "GGML":
                     logging.warning("Found normal HuggingFace model, starting conversion...")
-                    return cls.from_transformer(model_path_or_repo_id, session_config, lora_paths, verbose, default_quantization, default_container)
+                    return cls.from_transformer(model_path_or_repo_id, session_config, tokenizer_path_or_repo_id, lora_paths, verbose, use_hf_tokenizer,default_quantization, default_container)
             
                 resolved_path = cls._find_model_path_from_repo(str(model_path_or_repo_id),model_file)
-                return cls.from_file(resolved_path,model_type,session_config,lora_paths,verbose)
+                return cls.from_file(resolved_path,model_type,session_config,tokenizer_path_or_repo_id,lora_paths,verbose,use_hf_tokenizer)
             
             elif path_type == PathType.DIR:
                 resolved_path = cls._find_model_path_from_dir(str(model_path_or_repo_id),model_file)
-                return cls.from_file(resolved_path,model_type,session_config,lora_paths,verbose)
+                return cls.from_file(resolved_path,model_type,session_config,tokenizer_path_or_repo_id,lora_paths,verbose,use_hf_tokenizer)
             
             else:
                 raise ValueError(f"Unknown path type '{path_type}'")
@@ -322,8 +333,10 @@ class AutoModel():
     def from_transformer(cls,
         model_path_or_repo_id: Union[str,os.PathLike],
         session_config:SessionConfig=SessionConfig(),
+        tokenizer_path_or_repo_id: Optional[Union[str,os.PathLike]]=None,
         lora_paths:Optional[List[Union[str,os.PathLike]]]=None,
         verbose:bool=False,
+        use_hf_tokenizer:bool=True,
         default_quantization:QuantizationType=QuantizationType.Q4_0,
         default_container:ContainerType=ContainerType.GGJT):
         
@@ -341,7 +354,7 @@ class AutoModel():
         converted_model = AutoConverter.convert(model_path_or_repo_id,export_path)
         if default_quantization != QuantizationType.F16:
             converted_model = AutoQuantizer.quantize(converted_model,quantization=default_quantization,container=default_container)
-        return cls.from_file(converted_model,None,session_config,lora_paths,verbose)
+        return cls.from_file(converted_model,None,session_config,tokenizer_path_or_repo_id,lora_paths,verbose,use_hf_tokenizer)
     
 # Hack to make the quantization type enum hashable
 _APPENDIX_MAP = {
@@ -357,7 +370,13 @@ class AutoQuantizer():
     Utility to quantize models, without having to specify the model type.
     """
     @staticmethod
-    def quantize(model_file:Union[str,os.PathLike],target_path:Optional[Union[str,os.PathLike]]=None,quantization:QuantizationType=QuantizationType.Q4_0,container:ContainerType=ContainerType.GGJT)->Union[str,os.PathLike]:
+    def quantize(
+        model_file:Union[str,os.PathLike],
+        target_path:Optional[Union[str,os.PathLike]]=None,
+        quantization:QuantizationType=QuantizationType.Q4_0,
+        container:ContainerType=ContainerType.GGJT,
+        callback:Optional[Callable[[str],None]]=None
+        )->Union[str,os.PathLike]:
         metadata=AutoModel.load_metadata(model_file)
         if metadata.quantization != QuantizationType.F16:
             raise ValueError(f"Model '{model_file}' is already quantized to '{metadata.quantization}'")
@@ -391,7 +410,7 @@ class AutoQuantizer():
             return target_file
         
         logging.info(f"Quantizing model '{model_file}' to '{target_file}'")
-        model_type.quantize(str(model_file),target_file,quantization,container)
+        model_type.quantize(str(model_file),target_file,quantization,container,callback=callback)
 
         metadata_file = pathlib.Path(target_file).with_suffix(".meta")
         quantized_metadata = ModelMetadata(model=metadata.model,quantization=quantization,container=container,quantization_version=CURRENT_QUANTIZATION_VERSION,base_model=metadata.base_model)

@@ -32,6 +32,7 @@ pub fn _quantize<M: llm::KnownModel + 'static>(
     destination: PathBuf,
     container: ContainerType,
     quantization: QuantizationType,
+    progress_callback: impl Fn(String),
 ) -> Result<(), QuantizeError> {
     let container = match container {
         ContainerType::GGML => ggml::format::SaveContainerType::Ggml,
@@ -49,43 +50,49 @@ pub fn _quantize<M: llm::KnownModel + 'static>(
         }),
     }?;
 
-    let mut source = BufReader::new(std::fs::File::open(source)?);
-    let mut destination = BufWriter::new(std::fs::File::create(destination)?);
+    let mut source_reader = BufReader::new(std::fs::File::open(&source)?);
+    let mut destination_reader = BufWriter::new(std::fs::File::create(destination)?);
+    let vocabulary = llm::VocabularySource::Model.retrieve(&source).unwrap();
 
     quantize::<M, _, _>(
-        &mut source,
-        &mut destination,
+        &mut source_reader,
+        &mut destination_reader,
+        vocabulary,
         container,
         quantization,
         |progress| match progress {
-            QuantizeProgress::HyperparametersLoaded => log::info!("Loaded hyperparameters"),
+            QuantizeProgress::HyperparametersLoaded => {
+                progress_callback("Loaded hyperparameters".to_string())
+            }
             QuantizeProgress::TensorLoading {
                 name,
                 dims,
                 element_type,
                 n_elements,
-            } => println!(
+            } => progress_callback(format!(
                 "Loading tensor `{name}` ({n_elements} ({dims:?}) {element_type} elements)"
-            ),
-            QuantizeProgress::TensorQuantizing { name } => log::info!("Quantizing tensor `{name}`"),
+            )),
+            QuantizeProgress::TensorQuantizing { name } => {
+                progress_callback(format!("Quantizing tensor `{name}`"))
+            }
             QuantizeProgress::TensorQuantized {
                 name,
                 original_size,
                 reduced_size,
                 history,
-            } => println!(
+            } => progress_callback(format!(
         "Quantized tensor `{name}` from {original_size} to {reduced_size} bytes ({history:?})"
-    ),
+    )),
             QuantizeProgress::TensorSkipped { name, size } => {
-                println!("Skipped tensor `{name}` ({size} bytes)")
+                progress_callback(format!("Skipped tensor `{name}` ({size} bytes)"))
             }
             QuantizeProgress::Finished {
                 original_size,
                 reduced_size,
                 history,
-            } => println!(
+            } => progress_callback(format!(
                 "Finished quantization from {original_size} to {reduced_size} bytes ({history:?})"
-            ),
+            )),
         },
     )
 }

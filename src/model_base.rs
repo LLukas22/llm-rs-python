@@ -89,7 +89,7 @@ impl GenerationStreamer {
     }
 }
 
-pub fn _tokenize(model: &dyn llm::Model, text: &str) -> Result<Vec<i32>, InferenceError> {
+pub fn _tokenize(model: &dyn llm::Model, text: &str) -> Result<Vec<u32>, InferenceError> {
     Ok(model
         .vocabulary()
         .tokenize(text, false)?
@@ -98,12 +98,9 @@ pub fn _tokenize(model: &dyn llm::Model, text: &str) -> Result<Vec<i32>, Inferen
         .collect())
 }
 
-pub fn _decode(model: &dyn llm::Model, tokens: Vec<i32>) -> Result<String, std::str::Utf8Error> {
+pub fn _decode(model: &dyn llm::Model, tokens: Vec<u32>) -> Result<String, std::str::Utf8Error> {
     let vocab = model.vocabulary();
-    let characters: Vec<u8> = tokens
-        .into_iter()
-        .flat_map(|token| vocab.id_to_token[token as usize].to_owned())
-        .collect();
+    let characters: Vec<u8> = vocab.decode(tokens, false);
 
     match std::str::from_utf8(&characters) {
         Ok(text) => Ok(text.to_string()),
@@ -163,7 +160,7 @@ pub fn _infer_next_token(
         }
 
         //Buffer until a valid utf8 sequence is found
-        if let Some(s) = utf8_buf.push(token) {
+        if let Some(s) = utf8_buf.push(&token) {
             return Ok(Some(s));
         }
     }
@@ -303,6 +300,7 @@ macro_rules! wrap_model {
             fn new(
                 path: String,
                 session_config: Option<crate::configs::SessionConfig>,
+                tokenizer_name_or_path: Option<String>,
                 lora_paths: Option<Vec<String>>,
                 verbose: Option<bool>,
             ) -> Self {
@@ -320,8 +318,27 @@ macro_rules! wrap_model {
                     prefer_mmap: config_to_use.prefer_mmap,
                     lora_adapters: lora_paths.clone(),
                 };
+
+                let vocabulary_source: llm_base::VocabularySource;
+
+                if let Some(name_or_path) = tokenizer_name_or_path {
+                    let tokenizer_path = std::path::Path::new(&name_or_path);
+                    if tokenizer_path.is_file() && tokenizer_path.exists() {
+                        // Load tokenizer from file
+                        vocabulary_source = llm_base::VocabularySource::HuggingFaceTokenizerFile(
+                            tokenizer_path.to_owned(),
+                        );
+                    } else {
+                        // Load tokenizer from HuggingFace
+                        vocabulary_source =
+                            llm_base::VocabularySource::HuggingFaceRemote(name_or_path);
+                    }
+                } else {
+                    vocabulary_source = llm_base::VocabularySource::Model;
+                }
+
                 let llm_model: $llm_model =
-                    llm_base::load(&path, model_params, None, |load_progress| {
+                    llm_base::load(&path, vocabulary_source, model_params, |load_progress| {
                         if should_log {
                             llm_base::load_progress_callback_stdout(load_progress)
                         }
@@ -399,14 +416,14 @@ macro_rules! wrap_model {
                 })
             }
 
-            fn tokenize(&self, text: String) -> PyResult<Vec<i32>> {
+            fn tokenize(&self, text: String) -> PyResult<Vec<u32>> {
                 match crate::model_base::_tokenize(self.llm_model.as_ref(), &text) {
                     Ok(tokens) => Ok(tokens),
                     Err(e) => Err(pyo3::exceptions::PyException::new_err(e.to_string())),
                 }
             }
 
-            fn decode(&self, tokens: Vec<i32>) -> PyResult<String> {
+            fn decode(&self, tokens: Vec<u32>) -> PyResult<String> {
                 match crate::model_base::_decode(self.llm_model.as_ref(), tokens) {
                     Ok(tokens) => Ok(tokens),
                     Err(e) => Err(pyo3::exceptions::PyException::new_err(e.to_string())),
@@ -415,16 +432,34 @@ macro_rules! wrap_model {
 
             #[staticmethod]
             fn quantize(
+                _py: Python,
                 source: String,
                 destination: String,
                 quantization: Option<crate::quantize::QuantizationType>,
                 container: Option<crate::quantize::ContainerType>,
+                callback: Option<PyObject>,
             ) -> PyResult<()> {
+                let mut callback_function: Option<&PyAny> = None;
+                let pytohn_object: Py<PyAny>;
+
+                if let Some(unwrapped) = callback {
+                    pytohn_object = unwrapped;
+                    let python_function = pytohn_object.as_ref(_py);
+                    callback_function = Some(python_function);
+                    assert!(python_function.is_callable(), "Callback is not callable!");
+                }
+
                 crate::quantize::_quantize::<$llm_model>(
                     source.into(),
                     destination.into(),
                     container.unwrap_or(crate::quantize::ContainerType::GGJT),
                     quantization.unwrap_or(crate::quantize::QuantizationType::Q4_0),
+                    |message| {
+                        if let Some(callback) = callback_function {
+                            let args = pyo3::types::PyTuple::new(_py, &[message]);
+                            callback.call1(args).unwrap();
+                        }
+                    },
                 )
                 .map_err(|e| pyo3::exceptions::PyException::new_err(e.to_string()))
             }
