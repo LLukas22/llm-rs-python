@@ -30,7 +30,9 @@ jobs:
           args: --release --out dist --find-interpreter --zig
           sccache: 'true'
         env:
-          RUSTFLAGS: "-C link-arg=-undefined -C link-arg=dynamic_lookup"
+          CC: clang
+          CXX: clang++
+          MACOSX_DEPLOYMENT_TARGET: 10.9
 
       - name: Upload wheels
         uses: actions/upload-artifact@v3
