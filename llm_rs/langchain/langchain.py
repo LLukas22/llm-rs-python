@@ -31,11 +31,11 @@ class RustformerLLM(LLM):
     model_file: Optional[str] = None
     """The name of the model file in repo or directory."""
 
-    # session_config:SessionConfig=SessionConfig()
-    # """Session config for the model."""
+    session_config:SessionConfig=SessionConfig()
+    """Session config for the model."""
 
-    # generation_config:GenerationConfig=GenerationConfig()
-    # """Generation config for the model."""
+    generation_config:GenerationConfig=GenerationConfig()
+    """Generation config for the model."""
 
     lora_paths:Optional[List[Union[str,os.PathLike]]]=None
     """Paths to the lora files."""
@@ -48,8 +48,8 @@ class RustformerLLM(LLM):
             'model_path_or_repo_id': self.model_path_or_repo_id,
             'model_type': self.model_type,
             'model_file': self.model_file,
-            # 'session_config': self.session_config,
-            # 'generation_config': self.generation_config,
+            'session_config': self.session_config,
+            'generation_config': self.generation_config,
             'lora_paths': self.lora_paths,
         }
 
@@ -65,7 +65,7 @@ class RustformerLLM(LLM):
             model_path_or_repo_id= values['model_path_or_repo_id'],
             model_type=values['model_type'],
             model_file=values['model_file'],
-            # session_config=values['session_config'],
+            session_config=values['session_config'],
             lora_paths=values['lora_paths'],
         )
         return values
@@ -86,8 +86,8 @@ class RustformerLLM(LLM):
             The generated text.
         """
         text = []
-        generation_config = GenerationConfig()
 
+        generation_config = self.generation_config
         if stop:
             generation_config.stop_words = list(stop)
         for chunk in self.model.stream(prompt, generation_config=generation_config):

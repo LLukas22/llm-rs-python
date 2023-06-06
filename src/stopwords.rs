@@ -1,6 +1,7 @@
+use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
 
-#[derive(Clone)]
+#[derive(Clone, Serialize, Deserialize)]
 struct Buffer<T> {
     pub data: Vec<T>,
     capacity: usize,
@@ -22,7 +23,7 @@ impl<T> Buffer<T> {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Serialize, Deserialize)]
 pub struct StopWordHandler {
     pub stop_words: HashSet<Vec<u8>>,
     buffer: Buffer<u8>,

@@ -1,9 +1,11 @@
 use crate::stopwords::StopWordHandler;
 use llm::{InferenceParameters, InferenceSessionConfig, ModelKVMemoryType, TokenBias};
-use pyo3::prelude::*;
+use pyo3::{prelude::*, types::PyBytes};
+use serde::{Deserialize, Serialize};
 
 #[pyclass]
-#[derive(Clone)]
+#[pyo3(module = "llm_rs.config")]
+#[derive(Clone, Serialize, Deserialize)]
 pub struct GenerationConfig {
     #[pyo3(get, set)]
     pub top_k: usize,
@@ -77,6 +79,39 @@ impl GenerationConfig {
             stop_word_handler: None,
         }
     }
+
+    pub fn __setstate__(&mut self, state: &PyBytes) -> PyResult<()> {
+        *self = serde_json::from_slice(state.as_bytes()).unwrap();
+        Ok(())
+    }
+    pub fn __getstate__<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
+        Ok(PyBytes::new(py, &serde_json::to_vec(&self).unwrap()))
+    }
+
+    #[allow(clippy::type_complexity)]
+    pub fn __getnewargs__(
+        &self,
+    ) -> PyResult<(
+        usize,
+        f32,
+        f32,
+        f32,
+        usize,
+        u64,
+        Option<usize>,
+        Option<Vec<String>>,
+    )> {
+        Ok((
+            self.top_k,
+            self.top_p,
+            self.temperature,
+            self.repetition_penalty,
+            self.repetition_penalty_last_n,
+            self.seed,
+            self.max_new_tokens,
+            self.stop_words.clone(),
+        ))
+    }
 }
 
 impl GenerationConfig {
@@ -97,10 +132,39 @@ impl GenerationConfig {
 }
 
 #[pyclass]
-#[derive(Clone, Copy, Debug, PartialEq)]
+#[pyo3(module = "llm_rs.config")]
+#[derive(Clone, Copy, Debug, PartialEq, Serialize, Deserialize)]
 pub enum Precision {
     FP32,
     FP16,
+}
+
+#[pymethods]
+impl Precision {
+    #[new]
+    fn new(value: usize) -> Self {
+        match value {
+            16 => Precision::FP16,
+            32 => Precision::FP32,
+            _ => panic!("Invalid precision value"),
+        }
+    }
+
+    pub fn __setstate__(&mut self, state: &PyBytes) -> PyResult<()> {
+        *self = serde_json::from_slice(state.as_bytes()).unwrap();
+        Ok(())
+    }
+    pub fn __getstate__<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
+        Ok(PyBytes::new(py, &serde_json::to_vec(&self).unwrap()))
+    }
+
+    pub fn __getnewargs__(&self) -> PyResult<(usize,)> {
+        //Hack to get pyo3 enum pickle serializable
+        match self {
+            Precision::FP16 => Ok((16_usize,)),
+            Precision::FP32 => Ok((32_usize,)),
+        }
+    }
 }
 
 impl Precision {
@@ -113,7 +177,8 @@ impl Precision {
 }
 
 #[pyclass]
-#[derive(Clone, Copy)]
+#[pyo3(module = "llm_rs.config")]
+#[derive(Clone, Copy, Serialize, Deserialize)]
 pub struct SessionConfig {
     #[pyo3(get, set)]
     pub threads: usize,
@@ -135,8 +200,8 @@ impl Default for SessionConfig {
             threads: 8,
             batch_size: 8,
             context_length: 2048,
-            keys_memory_type: Precision::FP32,
-            values_memory_type: Precision::FP32,
+            keys_memory_type: Precision::FP16,
+            values_memory_type: Precision::FP16,
             prefer_mmap: true,
         }
     }
@@ -158,10 +223,28 @@ impl SessionConfig {
             threads: threads.unwrap_or(8),
             batch_size: batch_size.unwrap_or(8),
             context_length: context_length.unwrap_or(2048),
-            keys_memory_type: keys_memory_type.unwrap_or(Precision::FP32),
-            values_memory_type: values_memory_type.unwrap_or(Precision::FP32),
+            keys_memory_type: keys_memory_type.unwrap_or(Precision::FP16),
+            values_memory_type: values_memory_type.unwrap_or(Precision::FP16),
             prefer_mmap: prefer_mmap.unwrap_or(true),
         }
+    }
+
+    pub fn __setstate__(&mut self, state: &PyBytes) -> PyResult<()> {
+        *self = serde_json::from_slice(state.as_bytes()).unwrap();
+        Ok(())
+    }
+    pub fn __getstate__<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
+        Ok(PyBytes::new(py, &serde_json::to_vec(&self).unwrap()))
+    }
+    pub fn __getnewargs__(&self) -> PyResult<(usize, usize, usize, Precision, Precision, bool)> {
+        Ok((
+            self.threads,
+            self.batch_size,
+            self.context_length,
+            self.keys_memory_type,
+            self.values_memory_type,
+            self.prefer_mmap,
+        ))
     }
 }
 
