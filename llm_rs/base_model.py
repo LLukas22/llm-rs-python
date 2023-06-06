@@ -38,6 +38,12 @@ class Model(ABC):
         """ 
         ...
 
+    def generate(self,prompt:str) -> List[float]: 
+        """
+        Embed a given prompt into vector representation.
+        """ 
+        ...
+
     def stream(self,prompt:str,
                  generation_config:Optional[GenerationConfig]=None,
                  ) -> Generator[str,None,None]: 

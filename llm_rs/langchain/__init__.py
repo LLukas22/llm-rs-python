@@ -1,1 +1,1 @@
-from .langchain import RustformerLLM
+from .langchain import RustformersLLM

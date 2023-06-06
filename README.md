@@ -1,10 +1,17 @@
 # llm-rs-python: Python Bindings for Rust's llm Library
 
+[![PyPI](https://img.shields.io/pypi/v/llm-rs)](https://pypi.org/project/llm-rs/)
+[![PyPI - License](https://img.shields.io/pypi/l/llm-rs)](https://pypi.org/project/llm-rs/)
+[![PyPI - Downloads](https://img.shields.io/pypi/dm/llm-rs)](https://pypi.org/project/llm-rs/)
+
 Welcome to `llm-rs`, an unofficial Python interface for the Rust-based [llm](https://github.com/rustformers/llm) library, made possible through [PyO3](https://github.com/PyO3/pyo3). Our package combines the convenience of Python with the performance of Rust to offer an efficient tool for your machine learning projects. 🐍❤️🦀
 
 With `llm-rs`, you can operate a variety of Large Language Models (LLMs) including LLama and GPT-NeoX directly on your CPU. 
 
 For a detailed overview of all the supported architectures, visit the [llm](https://github.com/rustformers/llm) project page. 
+
+### Integrations:
+* 🦜️🔗 LangChain
 
 ## Installation
 
@@ -89,7 +96,30 @@ def callback(text):
 
 model.generate("The meaning of life is",callback=callback)
 ```
+## 🦜️🔗 LangChain Usage
+To use `llm-rs-python` via langchain additional dependencies are required. These can be installed via `pip install llm-rs[langchain]`. Then the `RustformersLLM` model is accessible via the `llm_rs.langchain` module. This model implements generation and embedding capabilities.
+The example bellow shows a simple LLMchain with MPT-Instruct.
 
+```python
+from llm_rs.langchain import RustformersLLM
+from langchain import PromptTemplate
+from langchain.chains import LLMChain
+from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
+
+template="""Below is an instruction that describes a task. Write a response that appropriately completes the request.
+### Instruction:
+{instruction}
+### Response:
+Answer:"""
+
+prompt = PromptTemplate(input_variables=["instruction"],template=template,)
+
+llm = RustformersLLM(model_path_or_repo_id="rustformers/mpt-7b-ggml",model_file="mpt-7b-instruct-q5_1-ggjt.bin",callbacks=[StreamingStdOutCallbackHandler()])
+
+chain = LLMChain(llm=llm, prompt=prompt)
+
+chain.run("Write a short post congratulating rustformers on their new release of their langchain integration.")
+```
 ## Documentation
 
 For in-depth information on customizing the loading and generation processes, refer to our detailed [documentation](https://llukas22.github.io/llm-rs-python/).
