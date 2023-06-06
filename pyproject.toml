@@ -38,7 +38,7 @@ convert=[
 ]
 
 langchain=[
-  "langchain"
+  "langchain>=0.0.190"
 ]
 
 [tool.maturin]

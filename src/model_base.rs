@@ -278,6 +278,34 @@ pub fn _generate(
     Ok(result)
 }
 
+pub fn _embed(
+    _py: Python,
+    model: &dyn llm::Model,
+    session_config: &configs::SessionConfig,
+    prompt: String,
+) -> Result<Vec<f32>, PyErr> {
+    let (_, inference_params, _, prompt, mut session) =
+        _start_session(model, session_config, &prompt, None);
+
+    //Feed the prompt
+    let mut output_request_feeding = OutputRequest {
+        all_logits: None,
+        embeddings: Some(Vec::new()),
+    };
+    _py.allow_threads(|| {
+        session
+            .feed_prompt::<Infallible, _>(
+                model,
+                &inference_params,
+                prompt,
+                &mut output_request_feeding,
+                |_| Ok(InferenceFeedback::Continue),
+            )
+            .unwrap()
+    });
+    Ok(output_request_feeding.embeddings.unwrap())
+}
+
 macro_rules! wrap_model {
     ($name:ident,$llm_model:ty) => {
         #[pyclass]
@@ -373,6 +401,15 @@ macro_rules! wrap_model {
                     prompt,
                     generation_config,
                     callback,
+                );
+            }
+
+            fn embed(&self, _py: Python, prompt: String) -> PyResult<Vec<f32>> {
+                return crate::model_base::_embed(
+                    _py,
+                    self.llm_model.as_ref(),
+                    &self.config,
+                    prompt,
                 );
             }
 
