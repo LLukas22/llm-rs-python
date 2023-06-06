@@ -97,8 +97,9 @@ def callback(text):
 model.generate("The meaning of life is",callback=callback)
 ```
 ## 🦜️🔗 LangChain Usage
-To use `llm-rs-python` via langchain additional dependencies are required. These can be installed via `pip install llm-rs[langchain]`. Then the `RustformersLLM` model is accessible via the `llm_rs.langchain` module. This model implements generation and embedding capabilities.
-The example bellow shows a simple LLMchain with MPT-Instruct.
+Utilizing `llm-rs-python` through langchain requires additional dependencies. You can install these using `pip install llm-rs[langchain]`. Once installed, you gain access to the `RustformersLLM` model through the `llm_rs.langchain` module. This particular model offers features for text generation and embeddings.
+
+Consider the example below, demonstrating a straightforward LLMchain implementation with MPT-Instruct:
 
 ```python
 from llm_rs.langchain import RustformersLLM
