@@ -41,5 +41,9 @@ langchain=[
   "langchain>=0.0.190"
 ]
 
+haystack=[
+  "farm-haystack>=1.17.1"
+]
+
 [tool.maturin]
 features = ["pyo3/extension-module"]
