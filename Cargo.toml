@@ -14,15 +14,19 @@ rand_chacha = "0.3.1"
 log  =  "0.4.17"
 serde = "1.0.163"
 serde_json = "1.0"
-llm = { git = "https://github.com/rustformers/llm.git", rev="2ef08c3"  }
-llm-base = { git = "https://github.com/rustformers/llm.git",rev="2ef08c3" }
-ggml = { git = "https://github.com/rustformers/llm.git",rev="2ef08c3" }
+llm = { git = "https://github.com/rustformers/llm.git", rev="3becd72"  }
+llm-base = { git = "https://github.com/rustformers/llm.git",rev="3becd72" }
 
 [dependencies.pyo3]
 version = "0.19.0"
 # "abi3-py37" tells pyo3 (and maturin) to build using the stable ABI with
 # Python 3.7 or later.
 features = ["abi3-py37","extension-module", "generate-import-lib"]
+
+[features]
+cublas = ["llm/cublas", "llm-base/cublas"]
+clblast = ["llm/clblast", "llm-base/clblast"]
+metal = ["llm/metal", "llm-base/metal"]
 
 [package.metadata.maturin]
 features = ["cublas", "clblast", "metal"]
