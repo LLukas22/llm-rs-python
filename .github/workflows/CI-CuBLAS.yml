@@ -1,13 +1,13 @@
 name: CI-CuBLAS
 
 on:
-  push:
-    branches:
-      - main
-      - master
-    tags:
-      - '*'
-  pull_request:
+#   push:
+#     branches:
+#       - main
+#       - master
+#     tags:
+#       - '*'
+#   pull_request:
   workflow_dispatch:
 
 permissions:
@@ -44,7 +44,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        target: [x64, x86]
+        target: [x64]
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-python@v4
@@ -74,7 +74,7 @@ jobs:
         uses: PyO3/maturin-action@v1
         with:
           command: sdist
-          args: --out dist --features cublas
+          args: --out dist
       - name: Upload sdist
         uses: actions/upload-artifact@v3
         with:
