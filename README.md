@@ -2,7 +2,7 @@
 
 [![PyPI](https://img.shields.io/pypi/v/llm-rs)](https://pypi.org/project/llm-rs/)
 [![PyPI - License](https://img.shields.io/pypi/l/llm-rs)](https://pypi.org/project/llm-rs/)
-[![PyPI - Downloads](https://img.shields.io/pypi/dm/llm-rs)](https://pypi.org/project/llm-rs/)
+[![Downloads](https://static.pepy.tech/badge/llm-rs)](https://pepy.tech/project/llm-rs)
 
 Welcome to `llm-rs`, an unofficial Python interface for the Rust-based [llm](https://github.com/rustformers/llm) library, made possible through [PyO3](https://github.com/PyO3/pyo3). Our package combines the convenience of Python with the performance of Rust to offer an efficient tool for your machine learning projects. 🐍❤️🦀
 
@@ -11,7 +11,8 @@ With `llm-rs`, you can operate a variety of Large Language Models (LLMs) includi
 For a detailed overview of all the supported architectures, visit the [llm](https://github.com/rustformers/llm) project page. 
 
 ### Integrations:
-* 🦜️🔗 LangChain
+* 🦜️🔗 [LangChain](https://github.com/hwchase17/langchain)
+* 🌾🔱 [Haystack](https://github.com/deepset-ai/haystack)
 
 ## Installation
 
@@ -121,6 +122,32 @@ chain = LLMChain(llm=llm, prompt=prompt)
 
 chain.run("Write a short post congratulating rustformers on their new release of their langchain integration.")
 ```
+
+
+## 🌾🔱 Haystack Usage
+Utilizing `llm-rs-python` through haystack requires additional dependencies. You can install these using `pip install llm-rs[haystack]`. Once installed, you gain access to the `RustformersInvocationLayer` model through the `llm_rs.haystack` module. This particular model offers features for text generation.
+
+Consider the example below, demonstrating a straightforward Haystack-Pipeline implementation with RedPajama-7B:
+
+```python
+from haystack.nodes import PromptNode, PromptModel
+from llm_rs.haystack import RustformersInvocationLayer
+
+model = PromptModel("rustformers/redpajama-7b-ggml",
+                    max_length=1024,
+                    invocation_layer_class=RustformersInvocationLayer,
+                    model_kwargs={"model_file":"RedPajama-INCITE-7B-Instruct-q5_1-ggjt.bin"})
+
+pn = PromptNode(
+    model,
+    max_length=1024,
+    default_prompt_template="question-answering-with-document-scores",
+)
+
+pn("Write me a short story about a lama riding a crab.",stream=True)
+```
+
+
 ## Documentation
 
 For in-depth information on customizing the loading and generation processes, refer to our detailed [documentation](https://llukas22.github.io/llm-rs-python/).

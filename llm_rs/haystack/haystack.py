@@ -1,6 +1,6 @@
 try:
-    from haystack.nodes.prompt.invocation_layer.base import PromptModelInvocationLayer
-    from haystack.nodes.prompt.invocation_layer.handlers import DefaultTokenStreamingHandler
+    from haystack.nodes import PromptModelInvocationLayer
+    from haystack.nodes.prompt.invocation_layer import DefaultTokenStreamingHandler
 except ImportError:
      raise ImportError(
         'To use the llm_rs.haystack module, please install llm-rs with the additional "haystack" dependencies via: pip install llm-rs[haystack]')
