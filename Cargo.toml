@@ -15,6 +15,6 @@ rand_chacha = "0.3.1"
 log  =  "0.4.17"
 serde = "1.0.163"
 serde_json = "1.0"
-llm = { git = "https://github.com/rustformers/llm.git", rev="e52a102"  }
-llm-base = { git = "https://github.com/rustformers/llm.git",rev="e52a102" }
-ggml = { git = "https://github.com/rustformers/llm.git",rev="e52a102" }
+llm = { git = "https://github.com/rustformers/llm.git", rev="275ba35"  }
+llm-base = { git = "https://github.com/rustformers/llm.git",rev="275ba35" }
+ggml = { git = "https://github.com/rustformers/llm.git",rev="275ba35" }

@@ -216,10 +216,14 @@ class AutoModel():
         
         tokenizer = tokenizer_path_or_repo_id
         if use_hf_tokenizer and tokenizer is None:
-            metadata = cls.load_metadata(path)
-            tokenizer = metadata.base_model
+            try:
+                metadata = cls.load_metadata(path)
+                tokenizer = metadata.base_model
+            except Exception as e:
+                logging.warning(f"Could not load metadata for model '{path}'!")
+
             if tokenizer is None or tokenizer == "":
-                raise ValueError(f"Model file '{path}' does not have a base_model specified in its metadata file but wants to use a huggingface-tokenizer! Please specify a base_model or expilicitly specify a tokenizer via `tokenizer_path_or_repo_id`.")
+                logging.warning(f"Model file '{path}' does not have a base_model specified in its metadata file but wants to use a huggingface-tokenizer! Please expilicitly specify a tokenizer via `tokenizer_path_or_repo_id` if you intend to use a huggingface-tokenizer.")
 
         model = cls._infer_model_type(path,model_type)
         return model(path,session_config,tokenizer_path_or_repo_id,lora_paths,verbose)
