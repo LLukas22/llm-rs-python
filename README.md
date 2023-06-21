@@ -127,21 +127,20 @@ chain.run("Write a short post congratulating rustformers on their new release of
 ## 🌾🔱 Haystack Usage
 Utilizing `llm-rs-python` through haystack requires additional dependencies. You can install these using `pip install llm-rs[haystack]`. Once installed, you gain access to the `RustformersInvocationLayer` model through the `llm_rs.haystack` module. This particular model offers features for text generation.
 
-Consider the example below, demonstrating a straightforward Haystack-Pipeline implementation with RedPajama-7B:
+Consider the example below, demonstrating a straightforward Haystack-Pipeline implementation with OpenLLama-3B:
 
 ```python
 from haystack.nodes import PromptNode, PromptModel
 from llm_rs.haystack import RustformersInvocationLayer
 
-model = PromptModel("rustformers/redpajama-7b-ggml",
+model = PromptModel("rustformers/open-llama-ggml",
                     max_length=1024,
                     invocation_layer_class=RustformersInvocationLayer,
-                    model_kwargs={"model_file":"RedPajama-INCITE-7B-Instruct-q5_1-ggjt.bin"})
+                    model_kwargs={"model_file":"open_llama_3b-q5_1-ggjt.bin"})
 
 pn = PromptNode(
     model,
-    max_length=1024,
-    default_prompt_template="question-answering-with-document-scores",
+    max_length=1024
 )
 
 pn("Write me a short story about a lama riding a crab.",stream=True)
