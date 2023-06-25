@@ -12,7 +12,8 @@ _ARCHITECTURE_CONVERTER_MAP = {
     "GPTJForCausalLM": GptJConverter,
     "GPT2LMHeadModel": Gpt2Converter,
     "BloomForCausalLM":BloomConverter,
-    "LLaMAForCausalLM":LlamaConverter
+    "LLaMAForCausalLM":LlamaConverter,
+    "LlamaForCausalLM":LlamaConverter #Open-LLaMA uses this as architecture name
 }
 
 class AutoConverter():
