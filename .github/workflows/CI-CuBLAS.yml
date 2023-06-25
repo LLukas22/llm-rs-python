@@ -35,7 +35,17 @@ jobs:
           args: --release --out dist --find-interpreter --features cublas
           sccache: 'true'
           manylinux: auto
-          before-script-linux: yum install -y openssl-devel
+          before-script-linux: yum install -y openssl-devel /
+                               yum install https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm /
+                               rpm --erase gpg-pubkey-7fa2af80* /
+                               wget https://developer.download.nvidia.com/compute/cuda/repos/rhel7/x86_64/cuda-12.1.0-1.x86_64.rpm /
+                               rpm install cuda-12.1.0-1.x86_64.rpm /
+                               yum clean expire-cache /
+                               yum install nvidia-driver-latest-dkms /
+                               sudo yum install cuda /
+                               yum install cuda-drivers
+
+
       - name: Upload wheels
         uses: actions/upload-artifact@v3
         with:
