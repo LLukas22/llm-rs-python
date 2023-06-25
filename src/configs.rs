@@ -115,10 +115,9 @@ impl GenerationConfig {
 }
 
 impl GenerationConfig {
-    pub fn to_llm_params(&self, n_threads: usize, n_batch: usize) -> InferenceParameters {
+    pub fn to_llm_params(&self, n_threads: usize) -> InferenceParameters {
         InferenceParameters {
             n_threads,
-            n_batch,
             sampler: std::sync::Arc::new(llm::samplers::TopPTopK {
                 top_k: self.top_k,
                 top_p: self.top_p,
@@ -253,6 +252,8 @@ impl SessionConfig {
         InferenceSessionConfig {
             memory_k_type: self.keys_memory_type.to_llama_rs_memory_type(),
             memory_v_type: self.values_memory_type.to_llama_rs_memory_type(),
+            n_batch: self.batch_size,
+            use_gpu: true
         }
     }
 }

@@ -125,7 +125,7 @@ pub fn _start_session<'a>(
     let mut config_to_use = generation_config.unwrap_or(configs::GenerationConfig::default());
 
     let generation_params =
-        config_to_use.to_llm_params(session_config.threads, session_config.batch_size);
+        config_to_use.to_llm_params(session_config.threads);
 
     let rng = ChaCha8Rng::seed_from_u64(config_to_use.seed);
     let prompt = Prompt::from(prompt);
@@ -345,6 +345,8 @@ macro_rules! wrap_model {
                     context_size: config_to_use.context_length,
                     prefer_mmap: config_to_use.prefer_mmap,
                     lora_adapters: lora_paths.clone(),
+                    use_gpu: true,
+                    gpu_layers: None,
                 };
 
                 let vocabulary_source: llm_base::VocabularySource;

@@ -1,45 +1,24 @@
 [build-system]
-requires = ["maturin>=0.14,<0.15"]
+requires = [ "maturin>=0.14,<0.15",]
 build-backend = "maturin"
 
 [project]
 name = "llm-rs"
-authors = [
-  { name="Lukas Kreussel"},
-]
 description = "Unofficial python bindings for llm-rs. 🐍❤️🦀"
 requires-python = ">=3.7"
-classifiers = [
-    "Programming Language :: Rust",
-    "Programming Language :: Python :: Implementation :: CPython",
-    "Programming Language :: Python :: Implementation :: PyPy",
-    "Programming Language :: Python :: 3",
-    "License :: OSI Approved :: MIT License",
-]
-keywords = ["LLM","Transformers"]
-dependencies =   [
-  "blake3",
-  "huggingface-hub >= 0.14.1",
-]
-
+classifiers = [ "Programming Language :: Rust", "Programming Language :: Python :: Implementation :: CPython", "Programming Language :: Python :: Implementation :: PyPy", "Programming Language :: Python :: 3", "License :: OSI Approved :: MIT License",]
+keywords = [ "LLM", "Transformers",]
+dependencies = [ "blake3", "huggingface-hub >= 0.14.1",]
+[[project.authors]]
+name = "Lukas Kreussel"
 
 [project.urls]
 repository = "https://github.com/LLukas22/llm-rs-python"
-documentation  = "https://llukas22.github.io/llm-rs-python/"
+documentation = "https://llukas22.github.io/llm-rs-python/"
 
 [project.optional-dependencies]
-convert=[
-  "transformers >= 4.29.0",
-  "sentencepiece >= 0.1.99",
-  "torch >= 2.0.0",
-  "accelerate >= 0.19.0",
-  "tqdm",
-  "einops >= 0.6.1"
-]
-
-langchain=[
-  "langchain>=0.0.190"
-]
+convert = [ "transformers >= 4.29.0", "sentencepiece >= 0.1.99", "torch >= 2.0.0", "accelerate >= 0.19.0", "tqdm", "einops >= 0.6.1",]
+langchain = [ "langchain>=0.0.190",]
 
 [tool.maturin]
-features = ["pyo3/extension-module"]
+features = [ "pyo3/extension-module",]

@@ -1,6 +1,6 @@
 [package]
 name = "llm-rs"
-version = "0.2.10"
+version = "0.2.12"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
@@ -14,8 +14,8 @@ rand_chacha = "0.3.1"
 log  =  "0.4.17"
 serde = "1.0.163"
 serde_json = "1.0"
-llm = { git = "https://github.com/rustformers/llm.git", rev="3becd72"  }
-llm-base = { git = "https://github.com/rustformers/llm.git",rev="3becd72" }
+llm = { git = "https://github.com/rustformers/llm.git", rev="8499798"  }
+llm-base = { git = "https://github.com/rustformers/llm.git",rev="8499798" }
 
 [dependencies.pyo3]
 version = "0.19.0"
@@ -27,6 +27,3 @@ features = ["abi3-py37","extension-module", "generate-import-lib"]
 cublas = ["llm/cublas", "llm-base/cublas"]
 clblast = ["llm/clblast", "llm-base/clblast"]
 metal = ["llm/metal", "llm-base/metal"]
-
-[package.metadata.maturin]
-features = ["cublas", "clblast", "metal"]
