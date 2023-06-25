@@ -39,8 +39,8 @@ jobs:
           args: --release --out dist --find-interpreter --features clblast
           sccache: 'true'
           manylinux: auto
-          before-script-linux: yum install -y openssl-devel /
-                               yum install -y clblast
+          before-script-linux: yum install -y openssl-devel && yum install -y clblast
+                               
       - name: Upload wheels
         uses: actions/upload-artifact@v3
         with:
