@@ -4,13 +4,13 @@ env:
     PYPROJECT_NAME: "llm-rs-opencl"
 
 on:
-  push:
-    branches:
-      - main
-      - master
-    tags:
-      - '*'
-  pull_request:
+  # push:
+  #   branches:
+  #     - main
+  #     - master
+  #   tags:
+  #     - '*'
+  # pull_request:
   workflow_dispatch:
 
 permissions:

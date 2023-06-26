@@ -33,25 +33,22 @@ jobs:
       - name: Set package name
         run: python ./build_scripts/pyproject_patcher.py
 
+      - name: Install libssl-dev
+        run: apt install libssl-dev
+
+      - uses: Jimver/cuda-toolkit@v0.2.10
+        id: cuda-toolkit
+        with:
+          cuda: '12.1.0'
+
       - name: Build wheels
         uses: PyO3/maturin-action@v1
         with:
           target: ${{ matrix.target }}
           args: --release --out dist --find-interpreter --features cublas
           sccache: 'true'
-          manylinux: auto
-          before-script-linux: | 
-                               yum install -y openssl-devel 
-                               yum install https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm 
-                               rpm --erase gpg-pubkey-7fa2af80* 
-                               wget https://developer.download.nvidia.com/compute/cuda/repos/rhel7/x86_64/cuda-12.1.0-1.x86_64.rpm 
-                               rpm install cuda-12.1.0-1.x86_64.rpm 
-                               yum clean expire-cache 
-                               yum install nvidia-driver-latest-dkms 
-                               sudo yum install cuda 
-                               yum install cuda-drivers
-
-
+          container: off
+          
       - name: Upload wheels
         uses: actions/upload-artifact@v3
         with:
@@ -86,6 +83,7 @@ jobs:
           target: ${{ matrix.target }}
           args: --release --out dist --find-interpreter --features cublas
           sccache: 'true'
+
       - name: Upload wheels
         uses: actions/upload-artifact@v3
         with:
