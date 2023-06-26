@@ -34,7 +34,7 @@ jobs:
         run: python ./build_scripts/pyproject_patcher.py
 
       - name: Install libssl-dev
-        run: apt install libssl-dev
+        run: sudo apt-get install libssl-dev
 
       - uses: Jimver/cuda-toolkit@v0.2.10
         id: cuda-toolkit
@@ -48,7 +48,7 @@ jobs:
           args: --release --out dist --find-interpreter --features cublas
           sccache: 'true'
           container: off
-          
+
       - name: Upload wheels
         uses: actions/upload-artifact@v3
         with:
