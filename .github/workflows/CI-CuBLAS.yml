@@ -89,48 +89,47 @@ jobs:
 
       - name: Include CUDA DLLs
         run: python ./build_scripts/repair_windows_wheels.py "./dist"
-        
+
       - name: Upload wheels
         uses: actions/upload-artifact@v3
         with:
           name: wheels
           path: wheelhouse
 
-  sdist:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-python@v4
-        with:
-          python-version: '3.10'
-      - name: Install build dependencies
-        run: pip install -r ./build_scripts/requirements.txt
-      - name: Set package name
-        run: python ./build_scripts/pyproject_patcher.py 
-      - name: Build sdist
-        uses: PyO3/maturin-action@v1
-        with:
-          command: sdist
-          args: --out dist
-      - name: Upload sdist
-        uses: actions/upload-artifact@v3
-        with:
-          name: wheels
-          path: dist
+  # sdist:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v3
+  #     - uses: actions/setup-python@v4
+  #       with:
+  #         python-version: '3.10'
+  #     - name: Install build dependencies
+  #       run: pip install -r ./build_scripts/requirements.txt
+  #     - name: Set package name
+  #       run: python ./build_scripts/pyproject_patcher.py 
+  #     - name: Build sdist
+  #       uses: PyO3/maturin-action@v1
+  #       with:
+  #         command: sdist
+  #         args: --out dist
+  #     - name: Upload sdist
+  #       uses: actions/upload-artifact@v3
+  #       with:
+  #         name: wheels
+  #         path: dist
 
   release:
     name: Release
     runs-on: ubuntu-latest
     if: "startsWith(github.ref, 'refs/tags/')"
-    needs: [windows, sdist]
+    needs: [linux, windows]
     steps:
       - uses: actions/download-artifact@v3
         with:
           name: wheels
-      - name: Publish to PyPI
-        uses: PyO3/maturin-action@v1
-        env:
-          MATURIN_PYPI_TOKEN: ${{ secrets.PYPI_API_TOKEN }}
+      - name: Upload wheels
+        uses: softprops/action-gh-release@v1
         with:
-          command: upload
-          args: --skip-existing *
+          files: |
+            wheels/*.whl
+

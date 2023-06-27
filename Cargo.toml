@@ -15,8 +15,8 @@ log  =  "0.4.17"
 serde = "1.0.163"
 serde_json = "1.0"
 
-llm = { git = "https://github.com/rustformers/llm.git", rev="a1f61b4"  }
-llm-base = { git = "https://github.com/rustformers/llm.git",rev="a1f61b4" }
+llm = { git = "https://github.com/LLukas22/llm.git", branch = "feat/cuda-opencl-acceleration"  }
+llm-base = { git = "https://github.com/LLukas22/llm.git", branch = "feat/cuda-opencl-acceleration" }
 
 [dependencies.pyo3]
 version = "0.19.0"
