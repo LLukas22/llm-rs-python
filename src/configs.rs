@@ -191,6 +191,10 @@ pub struct SessionConfig {
     pub values_memory_type: Precision,
     #[pyo3(get)]
     pub prefer_mmap: bool,
+    #[pyo3(get)]
+    pub use_gpu: bool,
+    #[pyo3(get)]
+    pub gpu_layers: Option<usize>,
 }
 
 impl Default for SessionConfig {
@@ -202,6 +206,8 @@ impl Default for SessionConfig {
             keys_memory_type: Precision::FP16,
             values_memory_type: Precision::FP16,
             prefer_mmap: true,
+            use_gpu: false,
+            gpu_layers: None,
         }
     }
 }
@@ -217,6 +223,8 @@ impl SessionConfig {
         keys_memory_type: Option<Precision>,
         values_memory_type: Option<Precision>,
         prefer_mmap: Option<bool>,
+        use_gpu: Option<bool>,
+        gpu_layers: Option<usize>,
     ) -> Self {
         SessionConfig {
             threads: threads.unwrap_or(8),
@@ -225,6 +233,8 @@ impl SessionConfig {
             keys_memory_type: keys_memory_type.unwrap_or(Precision::FP16),
             values_memory_type: values_memory_type.unwrap_or(Precision::FP16),
             prefer_mmap: prefer_mmap.unwrap_or(true),
+            use_gpu: use_gpu.unwrap_or(false),
+            gpu_layers,
         }
     }
 
@@ -235,7 +245,10 @@ impl SessionConfig {
     pub fn __getstate__<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
         Ok(PyBytes::new(py, &serde_json::to_vec(&self).unwrap()))
     }
-    pub fn __getnewargs__(&self) -> PyResult<(usize, usize, usize, Precision, Precision, bool)> {
+    #[allow(clippy::type_complexity)]
+    pub fn __getnewargs__(
+        &self,
+    ) -> PyResult<(usize, usize, usize, Precision, Precision, bool, bool, usize)> {
         Ok((
             self.threads,
             self.batch_size,
@@ -243,6 +256,8 @@ impl SessionConfig {
             self.keys_memory_type,
             self.values_memory_type,
             self.prefer_mmap,
+            self.use_gpu,
+            self.gpu_layers.unwrap_or(0),
         ))
     }
 }
@@ -253,7 +268,7 @@ impl SessionConfig {
             memory_k_type: self.keys_memory_type.to_llama_rs_memory_type(),
             memory_v_type: self.values_memory_type.to_llama_rs_memory_type(),
             n_batch: self.batch_size,
-            use_gpu: true,
+            use_gpu: self.use_gpu,
         }
     }
 }

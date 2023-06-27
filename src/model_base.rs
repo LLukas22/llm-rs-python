@@ -344,8 +344,8 @@ macro_rules! wrap_model {
                     context_size: config_to_use.context_length,
                     prefer_mmap: config_to_use.prefer_mmap,
                     lora_adapters: lora_paths.clone(),
-                    use_gpu: true,
-                    gpu_layers: None,
+                    use_gpu: config_to_use.use_gpu,
+                    gpu_layers: config_to_use.gpu_layers,
                 };
 
                 let vocabulary_source: llm_base::VocabularySource;
