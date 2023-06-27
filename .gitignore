@@ -1,3 +1,6 @@
+#Ignore wheels
+*.whl
+
 #Ignore models
 test.py
 /*.bin

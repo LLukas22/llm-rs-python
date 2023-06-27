@@ -47,5 +47,20 @@ class SessionConfig():
     
     @property
     def prefer_mmap(self)->bool:...
+
+    @property
+    def use_gpu(self)->bool:...
+
+    @property
+    def gpu_layers(self)->Optional[int]:...
     
-    def  __init__(self,threads:int=8,batch_size:int=8,context_length:int=2048,keys_memory_type:Precision=Precision.FP16,values_memory_type:Precision=values_memory_type.FP16,prefer_mmap:bool=True) -> None: ...
+    def  __init__(self,
+                  threads:int=8,
+                  batch_size:int=8,
+                  context_length:int=2048,
+                  keys_memory_type:Precision=Precision.FP16,
+                  values_memory_type:Precision=values_memory_type.FP16,
+                  prefer_mmap:bool=True,
+                  use_gpu:bool=False,
+                  gpu_layers:Optional[int]=None
+                  ) -> None: ...
