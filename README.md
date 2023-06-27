@@ -18,6 +18,36 @@ For a detailed overview of all the supported architectures, visit the [llm](http
 
 Simply install it via pip: `pip install llm-rs`
 
+### Installation with GPU Acceleration Support
+> ⚠️ Please note that GPU Acceleration support is currently in its experimental phase.
+
+`llm-rs` incorporates support for various GPU-accelerated backends to facilitate enhanced inference times. To enable GPU-acceleration the `use_gpu` parameter of your `SessionConfig` must be set to `True`. We distribute prebuilt binaries for the following operating systems and graphics APIs:
+
+#### MacOS (Using Metal)
+For MacOS users, the Metal-supported version of `llm-rs` can be easily installed via pip:
+
+`
+pip install llm-rs-metal
+`
+
+#### Windows/Linux (Using CUDA for Nvidia GPUs)
+Due to the significant file size, CUDA-supported packages cannot be directly uploaded to `pip`. To install them, download the appropriate `*.whl` file from the latest [Release](https://github.com/LLukas22/llm-rs-python/releases/latest) and install it using pip as follows:
+
+`
+pip install [wheelname].whl
+`
+
+#### Windows/Linux (Using OpenCL for All GPUs)
+> ⚠️ OpenCL support is highly experimental and may not provide stable results.
+
+For universal GPU support on Windows and Linux, we offer an OpenCL-supported version. It can be installed via pip:
+
+`
+pip install llm-rs-opencl
+`
+
+
+
 ## Usage
 ### Running local GGML models:
 Models can be loaded via the `AutoModel` interface.
