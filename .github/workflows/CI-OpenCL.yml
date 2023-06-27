@@ -4,13 +4,13 @@ env:
     PYPROJECT_NAME: "llm-rs-opencl"
 
 on:
-  # push:
-  #   branches:
-  #     - main
-  #     - master
-  #   tags:
-  #     - '*'
-  # pull_request:
+  push:
+    branches:
+      - main
+      - master
+    tags:
+      - '*'
+  pull_request:
   workflow_dispatch:
 
 permissions:
@@ -32,14 +32,18 @@ jobs:
         run: pip install -r ./build_scripts/requirements.txt
       - name: Set package name
         run: python ./build_scripts/pyproject_patcher.py 
+      - name: Install libssl-dev
+        run: sudo apt-get install libssl-dev
+      - name: Install clblast
+        run: sudo apt install libclblast-dev
+
       - name: Build wheels
         uses: PyO3/maturin-action@v1
         with:
           target: ${{ matrix.target }}
           args: --release --out dist --find-interpreter --features clblast
           sccache: 'true'
-          manylinux: auto
-          before-script-linux: yum install -y openssl-devel && yum install -y clblast
+          container: off
                                
       - name: Upload wheels
         uses: actions/upload-artifact@v3
