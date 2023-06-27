@@ -253,7 +253,7 @@ impl SessionConfig {
             memory_k_type: self.keys_memory_type.to_llama_rs_memory_type(),
             memory_v_type: self.values_memory_type.to_llama_rs_memory_type(),
             n_batch: self.batch_size,
-            use_gpu: true
+            use_gpu: true,
         }
     }
 }

@@ -87,11 +87,14 @@ jobs:
           args: --release --out dist --find-interpreter --features cublas
           sccache: 'true'
 
+      - name: Include CUDA DLLs
+        run: python ./build_scripts/repair_windows_wheels.py "./dist"
+        
       - name: Upload wheels
         uses: actions/upload-artifact@v3
         with:
           name: wheels
-          path: dist
+          path: wheelhouse
 
   sdist:
     runs-on: ubuntu-latest
