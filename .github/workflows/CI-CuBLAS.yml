@@ -40,6 +40,9 @@ jobs:
         id: cuda-toolkit
         with:
           cuda: '12.1.0'
+          method: 'local'
+          linux-local-args: '["--toolkit"]'
+
 
       - name: Build wheels
         uses: PyO3/maturin-action@v1
