@@ -52,7 +52,7 @@ pub fn _quantize<M: llm::KnownModel + 'static>(
 
     let mut source_reader = BufReader::new(std::fs::File::open(&source)?);
     let mut destination_reader = BufWriter::new(std::fs::File::create(destination)?);
-    let vocabulary = llm::VocabularySource::Model.retrieve(&source).unwrap();
+    let vocabulary = llm::TokenizerSource::Embedded.retrieve(&source).unwrap();
 
     quantize::<M, _, _>(
         &mut source_reader,

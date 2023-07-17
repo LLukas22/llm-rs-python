@@ -1,6 +1,6 @@
 [package]
 name = "llm-rs"
-version = "0.2.12"
+version = "0.2.13"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
@@ -15,11 +15,11 @@ log  =  "0.4.17"
 serde = "1.0.163"
 serde_json = "1.0"
 
-llm = { git = "https://github.com/LLukas22/llm.git", branch = "feat/cuda-opencl-acceleration"  }
-llm-base = { git = "https://github.com/LLukas22/llm.git", branch = "feat/cuda-opencl-acceleration" }
+llm = { git = "https://github.com/rustformers/llm.git", rev = "4501976"}
+llm-base = { git = "https://github.com/rustformers/llm.git", rev = "4501976"}
 
 [dependencies.pyo3]
-version = "0.19.0"
+version = "0.19.1"
 # "abi3-py37" tells pyo3 (and maturin) to build using the stable ABI with
 # Python 3.7 or later.
 features = ["abi3-py37","extension-module", "generate-import-lib"]
