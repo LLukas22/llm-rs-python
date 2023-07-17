@@ -7,8 +7,21 @@ mod quantize;
 mod results;
 mod stopwords;
 
+#[pyfunction]
+fn get_accelerator()->String{
+   match llm_base::ggml::accelerator::get_accelerator(){
+    llm_base::ggml::accelerator::Accelerator::CuBLAS => "cuda".to_owned(),
+    llm_base::ggml::accelerator::Accelerator::CLBlast => "opencl".to_owned(),
+    llm_base::ggml::accelerator::Accelerator::Metal => "metal".to_owned(),
+    _ => "cpu".to_owned(),
+   }
+}
+
 #[pymodule]
 fn llm_rs(_py: Python, m: &PyModule) -> PyResult<()> {
+
+    m.add_function(wrap_pyfunction!(get_accelerator, m)?).unwrap();
+
     let config_module = PyModule::new(_py, "config")?;
     config_module.add_class::<configs::GenerationConfig>()?;
     config_module.add_class::<configs::Precision>()?;

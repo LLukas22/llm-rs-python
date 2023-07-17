@@ -1,7 +1,7 @@
 try:
     from .llm_rs import *
 except ImportError as e:
-    print("DLLs are were not boundled with this package. Trying to locate them...")
+    print("DLLs were not boundled with this package. Trying to locate them...")
     import os
     import platform
 
@@ -16,7 +16,7 @@ except ImportError as e:
 
         print(f"Adding {cuda_path} to DLL search path...")
         os.add_dll_directory(cuda_path)
-        
+
     try:
         from .llm_rs import *
     except ImportError as inner_e:
