@@ -193,12 +193,9 @@ pub fn _generate(
     let mut output_request_feeding = OutputRequest::default();
     _py.allow_threads(|| {
         session
-            .feed_prompt::<Infallible, _>(
-                model,
-                prompt,
-                &mut output_request_feeding,
-                |_| Ok(InferenceFeedback::Continue),
-            )
+            .feed_prompt::<Infallible, _>(model, prompt, &mut output_request_feeding, |_| {
+                Ok(InferenceFeedback::Continue)
+            })
             .unwrap()
     });
     let feed_prompt_duration = feed_start_at.elapsed().unwrap();
@@ -282,8 +279,7 @@ pub fn _embed(
     session_config: &configs::SessionConfig,
     prompt: String,
 ) -> Result<Vec<f32>, PyErr> {
-    let (_, _, _, prompt, mut session) =
-        _start_session(model, session_config, &prompt, None);
+    let (_, _, _, prompt, mut session) = _start_session(model, session_config, &prompt, None);
 
     //Feed the prompt
     let mut output_request_feeding = OutputRequest {
@@ -292,12 +288,9 @@ pub fn _embed(
     };
     _py.allow_threads(|| {
         session
-            .feed_prompt::<Infallible, _>(
-                model,
-                prompt,
-                &mut output_request_feeding,
-                |_| Ok(InferenceFeedback::Continue),
-            )
+            .feed_prompt::<Infallible, _>(model, prompt, &mut output_request_feeding, |_| {
+                Ok(InferenceFeedback::Continue)
+            })
             .unwrap()
     });
     Ok(output_request_feeding.embeddings.unwrap())
