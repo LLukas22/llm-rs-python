@@ -91,7 +91,7 @@ impl GenerationStreamer {
 
 pub fn _tokenize(model: &dyn llm::Model, text: &str) -> Result<Vec<u32>, InferenceError> {
     Ok(model
-        .vocabulary()
+        .tokenizer()
         .tokenize(text, false)?
         .iter()
         .map(|(_, token)| *token)
@@ -99,7 +99,7 @@ pub fn _tokenize(model: &dyn llm::Model, text: &str) -> Result<Vec<u32>, Inferen
 }
 
 pub fn _decode(model: &dyn llm::Model, tokens: Vec<u32>) -> Result<String, std::str::Utf8Error> {
-    let vocab = model.vocabulary();
+    let vocab = model.tokenizer();
     let characters: Vec<u8> = vocab.decode(tokens, false);
 
     match std::str::from_utf8(&characters) {
@@ -124,7 +124,7 @@ pub fn _start_session<'a>(
     //Build the correct generation parameters
     let mut config_to_use = generation_config.unwrap_or(configs::GenerationConfig::default());
 
-    let generation_params = config_to_use.to_llm_params(session_config.threads);
+    let generation_params = config_to_use.to_llm_params();
 
     let rng = ChaCha8Rng::seed_from_u64(config_to_use.seed);
     let prompt = Prompt::from(prompt);
@@ -193,13 +193,9 @@ pub fn _generate(
     let mut output_request_feeding = OutputRequest::default();
     _py.allow_threads(|| {
         session
-            .feed_prompt::<Infallible, _>(
-                model,
-                &inference_params,
-                prompt,
-                &mut output_request_feeding,
-                |_| Ok(InferenceFeedback::Continue),
-            )
+            .feed_prompt::<Infallible, _>(model, prompt, &mut output_request_feeding, |_| {
+                Ok(InferenceFeedback::Continue)
+            })
             .unwrap()
     });
     let feed_prompt_duration = feed_start_at.elapsed().unwrap();
@@ -283,8 +279,7 @@ pub fn _embed(
     session_config: &configs::SessionConfig,
     prompt: String,
 ) -> Result<Vec<f32>, PyErr> {
-    let (_, inference_params, _, prompt, mut session) =
-        _start_session(model, session_config, &prompt, None);
+    let (_, _, _, prompt, mut session) = _start_session(model, session_config, &prompt, None);
 
     //Feed the prompt
     let mut output_request_feeding = OutputRequest {
@@ -293,13 +288,9 @@ pub fn _embed(
     };
     _py.allow_threads(|| {
         session
-            .feed_prompt::<Infallible, _>(
-                model,
-                &inference_params,
-                prompt,
-                &mut output_request_feeding,
-                |_| Ok(InferenceFeedback::Continue),
-            )
+            .feed_prompt::<Infallible, _>(model, prompt, &mut output_request_feeding, |_| {
+                Ok(InferenceFeedback::Continue)
+            })
             .unwrap()
     });
     Ok(output_request_feeding.embeddings.unwrap())
@@ -348,22 +339,22 @@ macro_rules! wrap_model {
                     gpu_layers: config_to_use.gpu_layers,
                 };
 
-                let vocabulary_source: llm_base::VocabularySource;
+                let vocabulary_source: llm_base::TokenizerSource;
 
                 if let Some(name_or_path) = tokenizer_name_or_path {
                     let tokenizer_path = std::path::Path::new(&name_or_path);
                     if tokenizer_path.is_file() && tokenizer_path.exists() {
                         // Load tokenizer from file
-                        vocabulary_source = llm_base::VocabularySource::HuggingFaceTokenizerFile(
+                        vocabulary_source = llm_base::TokenizerSource::HuggingFaceTokenizerFile(
                             tokenizer_path.to_owned(),
                         );
                     } else {
                         // Load tokenizer from HuggingFace
                         vocabulary_source =
-                            llm_base::VocabularySource::HuggingFaceRemote(name_or_path);
+                            llm_base::TokenizerSource::HuggingFaceRemote(name_or_path);
                     }
                 } else {
-                    vocabulary_source = llm_base::VocabularySource::Model;
+                    vocabulary_source = llm_base::TokenizerSource::Embedded;
                 }
 
                 let llm_model: $llm_model =
@@ -434,7 +425,6 @@ macro_rules! wrap_model {
                     session
                         .feed_prompt::<std::convert::Infallible, _>(
                             self.llm_model.as_ref(),
-                            &inference_params,
                             prompt,
                             &mut output_request_feeding,
                             |_| Ok(llm_base::InferenceFeedback::Continue),

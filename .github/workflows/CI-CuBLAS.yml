@@ -36,12 +36,15 @@ jobs:
       - name: Install libssl-dev
         run: sudo apt-get install libssl-dev
 
-      - uses: Jimver/cuda-toolkit@v0.2.10
-        id: cuda-toolkit
+      - uses: Jimver/cuda-toolkit@v0.2.11
+        name: Install CUDA toolkit on Linux
+        id: cuda-toolkit-linux
         with:
-          cuda: '12.1.0'
-          method: 'local'
-          linux-local-args: '["--toolkit"]'
+          cuda: "12.2.0"
+          method: "network"
+          #See e.g. https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64/
+          non-cuda-sub-packages: '["libcublas","libcublas-dev"]'
+          sub-packages: '["nvcc","compiler","libraries","libraries-dev","cudart","cudart-dev"]'
 
 
       - name: Build wheels
@@ -76,10 +79,14 @@ jobs:
       - name: Set package name
         run: python ./build_scripts/pyproject_patcher.py
 
-      - uses: Jimver/cuda-toolkit@v0.2.10
-        id: cuda-toolkit
+      - uses: Jimver/cuda-toolkit@v0.2.11
+        name: Install CUDA toolkit on Windows
+        id: cuda-toolkit-windows
         with:
-          cuda: '12.1.0'
+          cuda: "12.2.0"
+          #See https://docs.nvidia.com/cuda/cuda-installation-guide-microsoft-windows/index.html#install-the-cuda-software
+          method: "local"
+          
       - name: Build wheels
         uses: PyO3/maturin-action@v1
         with:
