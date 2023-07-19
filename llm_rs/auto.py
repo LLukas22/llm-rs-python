@@ -51,6 +51,18 @@ _KNOWN_MODELS_MAP = {
     KnownModels.Llama: Llama
 }
 
+
+_STRING_TO_KNOWN_MODEL_MAP = {
+    "gpt2": KnownModels.Gpt2,
+    "starcoder": KnownModels.Gpt2,
+    "gpt_neox": KnownModels.GptNeoX,
+    "dolly-v2": KnownModels.GptNeoX,
+    "llama": KnownModels.Llama,
+    "mpt": KnownModels.Mpt,
+    "gptj": KnownModels.GptJ,
+    "bloom": KnownModels.Bloom,
+}
+
 CURRENT_QUANTIZATION_VERSION = QuantizationVersions.V2
 
 class PathType(Enum):
@@ -131,17 +143,16 @@ class AutoConfig():
         **kwargs,
     ) -> 'AutoConfig':
         path_type = _get_path_type(model_path_or_repo_id)
+        path = pathlib.Path(model_path_or_repo_id)
         if path_type == PathType.UNKNOWN:
             raise ValueError(
                 f"Model path '{model_path_or_repo_id}' doesn't exist.")
         elif path_type == PathType.FILE:
-            raise ValueError(
-                f"Model path '{model_path_or_repo_id}' is a file. "
-                "Please provide a directory or a repo id.")
+            path = path.resolve().parent
         
         auto_config = AutoConfig()
         if path_type == PathType.DIR:
-            cls._update_from_dir(str(model_path_or_repo_id), auto_config)
+            cls._update_from_dir(str(path), auto_config)
         elif path_type == PathType.REPO:
             cls._update_from_repo(str(model_path_or_repo_id), auto_config)
 
@@ -169,12 +180,26 @@ class AutoConfig():
         with open(path) as f:
             config = json.load(f)
         auto_config.model_type = config.get('model_type')
-        auto_config.repo_type = config.get('repo_type')
+        if 'repo_type' in config:
+            auto_config.repo_type = config.get('repo_type')
+        elif len(config) == 1:
+            auto_config.repo_type = "GGML"
+        else:
+            auto_config.repo_type = "HuggingFace"
+            
+        
 
 class AutoModel():
     """
     Utility to load models, without having to specify the model type.
     """
+
+    @classmethod
+    def has_metadata_file(cls,model_file:Union[str,os.PathLike])->bool:
+        path = pathlib.Path(model_file)
+        metadata_file = path.with_suffix(".meta")
+        return metadata_file.exists()
+
     @classmethod
     def load_metadata(cls,model_file:Union[str,os.PathLike])->ModelMetadata:
         path = pathlib.Path(model_file)
@@ -191,13 +216,21 @@ class AutoModel():
         return metadata
     
     @classmethod
-    def _infer_model_type(cls,model_file:Union[str,os.PathLike],known_model:Optional[KnownModels]=None)->Type[Model]:
+    def _infer_model_type(cls,model_file:Union[str,os.PathLike],known_model:Optional[KnownModels]=None,config:Optional[AutoConfig]=None)->Type[Model]:
         model_to_lookup = None
         if known_model:
             model_to_lookup = known_model
-        else:
+        elif cls.has_metadata_file(model_file):
             metadata = cls.load_metadata(model_file)
             model_to_lookup = metadata.model
+        elif config and config.model_type:
+            if config.model_type.lower() in _STRING_TO_KNOWN_MODEL_MAP:
+                model_to_lookup = _STRING_TO_KNOWN_MODEL_MAP[config.model_type.lower()]
+            else:
+                raise ValueError(f"Unknown model type '{config.model_type}' in config file '{model_file}'! Please specify the model type via `known_model`.")
+        else:
+            raise ValueError(f"Model file '{model_file}' does not have a metadata or config file and no model type was specified! Please specify the model type via `known_model`.")
+            
 
         if model_to_lookup in _KNOWN_MODELS_MAP:
             return _KNOWN_MODELS_MAP[model_to_lookup]
@@ -206,7 +239,9 @@ class AutoModel():
             
         
     @classmethod
-    def from_file(cls, path:Union[str,os.PathLike],
+    def from_file(cls, 
+                  path:Union[str,os.PathLike],
+                  config:Optional[AutoConfig],
                   model_type: Optional[KnownModels] = None,
                   session_config:SessionConfig=SessionConfig(),
                   tokenizer_path_or_repo_id: Optional[Union[str,os.PathLike]]=None,
@@ -225,7 +260,7 @@ class AutoModel():
             if tokenizer is None or tokenizer == "":
                 logging.warning(f"Model file '{path}' does not have a base_model specified in its metadata file but wants to use a huggingface-tokenizer! Please expilicitly specify a tokenizer via `tokenizer_path_or_repo_id` if you intend to use a huggingface-tokenizer.")
 
-        model = cls._infer_model_type(path,model_type)
+        model = cls._infer_model_type(path,model_type,config)
         return model(path,session_config,tokenizer_path_or_repo_id,lora_paths,verbose)
     
     @classmethod
@@ -241,34 +276,35 @@ class AutoModel():
         default_quantization:QuantizationType=QuantizationType.Q4_0,
         default_container:ContainerType=ContainerType.GGJT)->Model:
 
+        try: 
+            config = AutoConfig.from_pretrained(
+                model_path_or_repo_id,
+            )
+        except ValueError:
+            logging.warning("Could not find config.json in repo, assuming GGML model...")
+            config = AutoConfig(repo_type="GGML")
+
+        if model_file:
+            config.repo_type = "GGML"
+        
         path_type = _get_path_type(model_path_or_repo_id)
 
         if path_type == PathType.UNKNOWN:
             raise ValueError(f"Unknown path type for '{model_path_or_repo_id}'")
         elif path_type == PathType.FILE:
-            return cls.from_file(model_path_or_repo_id,model_type,session_config,tokenizer_path_or_repo_id,lora_paths,verbose,use_hf_tokenizer)
+            return cls.from_file(model_path_or_repo_id,config,model_type,session_config,tokenizer_path_or_repo_id,lora_paths,verbose,use_hf_tokenizer)
         else:
             if path_type == PathType.REPO:
-
-                try: 
-                    config = AutoConfig.from_pretrained(
-                        model_path_or_repo_id,
-                    )
-                except ValueError:
-                    logging.warning("Could not find config.json in repo, assuming GGML model...")
-                    config = AutoConfig(repo_type="GGML")
-                       
-
                 if config.repo_type != "GGML":
                     logging.warning("Found normal HuggingFace model, starting conversion...")
                     return cls.from_transformer(model_path_or_repo_id, session_config, tokenizer_path_or_repo_id, lora_paths, verbose, use_hf_tokenizer,default_quantization, default_container)
             
                 resolved_path = cls._find_model_path_from_repo(str(model_path_or_repo_id),model_file)
-                return cls.from_file(resolved_path,model_type,session_config,tokenizer_path_or_repo_id,lora_paths,verbose,use_hf_tokenizer)
+                return cls.from_file(resolved_path,config,model_type,session_config,tokenizer_path_or_repo_id,lora_paths,verbose,use_hf_tokenizer)
             
             elif path_type == PathType.DIR:
                 resolved_path = cls._find_model_path_from_dir(str(model_path_or_repo_id),model_file)
-                return cls.from_file(resolved_path,model_type,session_config,tokenizer_path_or_repo_id,lora_paths,verbose,use_hf_tokenizer)
+                return cls.from_file(resolved_path,config,model_type,session_config,tokenizer_path_or_repo_id,lora_paths,verbose,use_hf_tokenizer)
             
             else:
                 raise ValueError(f"Unknown path type '{path_type}'")

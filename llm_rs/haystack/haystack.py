@@ -3,7 +3,7 @@ try:
     from haystack.nodes.prompt.invocation_layer import DefaultTokenStreamingHandler
 except ImportError:
      raise ImportError(
-        'To use the llm_rs.haystack module, please install llm-rs with the additional "haystack" dependencies via: pip install llm-rs[haystack]')
+        'To use the llm_rs.haystack module, please install llm-rs with the additional "haystack" dependencies e.g. via: pip install llm-rs[haystack]')
 
 import os
 from typing import Dict, List, Union, Type, Optional
