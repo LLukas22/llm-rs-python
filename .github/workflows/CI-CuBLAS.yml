@@ -134,6 +134,9 @@ jobs:
       - uses: actions/download-artifact@v3
         with:
           name: wheels
+          path: wheels
+      - name: List wheel files
+        run: ls -l wheels
       - name: Upload wheels
         uses: softprops/action-gh-release@v1
         with:
