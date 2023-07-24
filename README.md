@@ -22,7 +22,7 @@ Simply install it via pip: `pip install llm-rs`
 <summary>Installation with GPU Acceleration Support</summary>
 <br>
 
-`llm-rs` incorporates support for various GPU-accelerated backends to facilitate enhanced inference times. To enable GPU-acceleration the `use_gpu` parameter of your `SessionConfig` must be set to `True`. We distribute prebuilt binaries for the following operating systems and graphics APIs:
+`llm-rs` incorporates support for various GPU-accelerated backends to facilitate enhanced inference times. To enable GPU-acceleration the `use_gpu` parameter of your `SessionConfig` must be set to `True`. The [llm documentation](https://github.com/rustformers/llm/blob/main/doc/acceleration-support.md#supported-accelerated-models) lists all model architectures, which are currently accelerated. We distribute prebuilt binaries for the following operating systems and graphics APIs:
 
 ### MacOS (Using Metal)
 For MacOS users, the Metal-supported version of `llm-rs` can be easily installed via pip:
