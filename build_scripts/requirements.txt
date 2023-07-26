@@ -1,2 +1,2 @@
 toml
-delvewheel 
+delvewheel==1.3.8
