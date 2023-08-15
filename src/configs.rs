@@ -1,5 +1,6 @@
 use crate::stopwords::StopWordHandler;
-use llm::{InferenceParameters, InferenceSessionConfig, ModelKVMemoryType, TokenBias};
+use llm::{InferenceParameters, InferenceSessionConfig, ModelKVMemoryType};
+use llm_base::samplers;
 use pyo3::{prelude::*, types::PyBytes};
 use serde::{Deserialize, Serialize};
 
@@ -117,14 +118,7 @@ impl GenerationConfig {
 impl GenerationConfig {
     pub fn to_llm_params(&self) -> InferenceParameters {
         InferenceParameters {
-            sampler: std::sync::Arc::new(llm::samplers::TopPTopK {
-                top_k: self.top_k,
-                top_p: self.top_p,
-                temperature: self.temperature,
-                repeat_penalty: self.repetition_penalty,
-                repetition_penalty_last_n: self.repetition_penalty_last_n,
-                bias_tokens: TokenBias::default(),
-            }),
+            sampler: samplers::default_samplers(),
         }
     }
 }

@@ -337,6 +337,7 @@ macro_rules! wrap_model {
                     lora_adapters: lora_paths.clone(),
                     use_gpu: config_to_use.use_gpu,
                     gpu_layers: config_to_use.gpu_layers,
+                    rope_overrides: None,
                 };
 
                 let vocabulary_source: llm_base::TokenizerSource;
