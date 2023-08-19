@@ -5,7 +5,7 @@ build-backend = "maturin"
 [project]
 name = "llm-rs"
 description = "Unofficial python bindings for llm-rs. 🐍❤️🦀"
-requires-python = ">=3.7"
+requires-python = ">=3.8"
 classifiers = [ "Programming Language :: Rust", "Programming Language :: Python :: Implementation :: CPython", "Programming Language :: Python :: Implementation :: PyPy", "Programming Language :: Python :: 3", "License :: OSI Approved :: MIT License",]
 keywords = [ "LLM", "Transformers",]
 dependencies = [ "blake3", "huggingface-hub >= 0.14.1",]
