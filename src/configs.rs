@@ -1,6 +1,5 @@
 use crate::stopwords::StopWordHandler;
 use llm::{InferenceParameters, InferenceSessionConfig, ModelKVMemoryType};
-use llm_base::samplers;
 use pyo3::{prelude::*, types::PyBytes};
 use serde::{Deserialize, Serialize};
 
@@ -116,9 +115,22 @@ impl GenerationConfig {
 }
 
 impl GenerationConfig {
-    pub fn to_llm_params(&self) -> InferenceParameters {
+    pub fn to_llm_params(&self) -> InferenceParameters {   
+
+        // Yup, this is awful. But it works for now.
+        let sampler_string = format!("repetition:last_n={last_n}:penalty={penalty}/topk:k={top_k}/topp:p={top_p}/temperature:temperature={temperature}",
+            last_n = self.repetition_penalty_last_n,
+            penalty = self.repetition_penalty,
+            top_k = self.top_k,
+            top_p = self.top_p,
+            temperature = self.temperature
+        );
+
+        let sampler_config = &[sampler_string];
+
+        let sampler = llm_base::samplers::build_sampler(0,Default::default(),sampler_config).unwrap();
         InferenceParameters {
-            sampler: samplers::default_samplers(),
+            sampler,
         }
     }
 }

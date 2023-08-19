@@ -14,9 +14,8 @@ rand_chacha = "0.3.1"
 log  =  "0.4.17"
 serde = "1.0.163"
 serde_json = "1.0"
-
-llm = { git = "https://github.com/rustformers/llm.git", rev = "c3eab08"}
-llm-base = { git = "https://github.com/rustformers/llm.git", rev = "c3eab08"}
+llm = { git = "https://github.com/rustformers/llm.git", rev = "129b84a" , features = ["falcon"]}
+llm-base = { git = "https://github.com/rustformers/llm.git", rev = "129b84a"}
 
 [dependencies.pyo3]
 version = "0.19.2"
