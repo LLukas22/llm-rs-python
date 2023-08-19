@@ -40,6 +40,8 @@ class SessionConfig():
     batch_size:int
     keys_memory_type:Precision
     values_memory_type:Precision
+    rope_frequency_scale:Optional[float]
+    rope_frequency_base:Optional[int]
     
     
     @property
@@ -62,5 +64,7 @@ class SessionConfig():
                   values_memory_type:Precision=values_memory_type.FP16,
                   prefer_mmap:bool=True,
                   use_gpu:bool=False,
-                  gpu_layers:Optional[int]=None
+                  gpu_layers:Optional[int]=None,
+                  rope_frequency_scale:Optional[float]=None,
+                  rope_frequency_base:Optional[int]=None
                   ) -> None: ...

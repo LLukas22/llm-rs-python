@@ -331,13 +331,14 @@ macro_rules! wrap_model {
                 let path = std::path::Path::new(&path);
                 let lora_paths = lora_paths
                     .map(|strings| strings.into_iter().map(std::path::PathBuf::from).collect());
+
                 let model_params = llm_base::ModelParameters {
                     context_size: config_to_use.context_length,
                     prefer_mmap: config_to_use.prefer_mmap,
                     lora_adapters: lora_paths.clone(),
                     use_gpu: config_to_use.use_gpu,
                     gpu_layers: config_to_use.gpu_layers,
-                    rope_overrides: None,
+                    rope_overrides: config_to_use.get_rope_overrides(),
                 };
 
                 let vocabulary_source: llm_base::TokenizerSource;
