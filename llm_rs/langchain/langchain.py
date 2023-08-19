@@ -9,7 +9,10 @@ except ImportError:
 from typing import Any, Dict, Optional, Sequence, Union, List
 import os
 
-from pydantic.v1 import root_validator
+try:
+    from pydantic.v1 import root_validator
+except ImportError:
+    from pydantic import root_validator
 
 from ..auto import AutoModel, KnownModels
 from ..config import GenerationConfig, SessionConfig

@@ -18,7 +18,7 @@ documentation = "https://llukas22.github.io/llm-rs-python/"
 
 [project.optional-dependencies]
 convert = [ "transformers >= 4.29.0", "sentencepiece >= 0.1.99", "torch >= 2.0.0", "accelerate >= 0.19.0", "tqdm", "einops >= 0.6.1",]
-langchain = [ "langchain>=0.0.190",]
+langchain = [ "langchain>=0.0.266",]
 
 haystack=[
   "farm-haystack>=1.17.1"
