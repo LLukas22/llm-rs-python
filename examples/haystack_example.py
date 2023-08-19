@@ -20,4 +20,5 @@ System: You are a helpful, respectful and honest assistant.
 User: Tell me a Story about a Lama riding the crab named Ferris in about 1000 words.
 Assistant:
 """
+
 model.invoke(prompt=prompt,stream=True)

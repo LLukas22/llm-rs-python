@@ -1,5 +1,5 @@
 use crate::stopwords::StopWordHandler;
-use llm::{InferenceParameters, InferenceSessionConfig, ModelKVMemoryType, TokenBias};
+use llm::{InferenceParameters, InferenceSessionConfig, ModelKVMemoryType, RoPEOverrides};
 use pyo3::{prelude::*, types::PyBytes};
 use serde::{Deserialize, Serialize};
 
@@ -116,16 +116,20 @@ impl GenerationConfig {
 
 impl GenerationConfig {
     pub fn to_llm_params(&self) -> InferenceParameters {
-        InferenceParameters {
-            sampler: std::sync::Arc::new(llm::samplers::TopPTopK {
-                top_k: self.top_k,
-                top_p: self.top_p,
-                temperature: self.temperature,
-                repeat_penalty: self.repetition_penalty,
-                repetition_penalty_last_n: self.repetition_penalty_last_n,
-                bias_tokens: TokenBias::default(),
-            }),
-        }
+        // Yup, this is awful. But it works for now.
+        let sampler_string = format!("repetition:last_n={last_n}:penalty={penalty}/topk:k={top_k}/topp:p={top_p}/temperature:temperature={temperature}",
+            last_n = self.repetition_penalty_last_n,
+            penalty = self.repetition_penalty,
+            top_k = self.top_k,
+            top_p = self.top_p,
+            temperature = self.temperature
+        );
+
+        let sampler_config = &[sampler_string];
+
+        let sampler =
+            llm_base::samplers::build_sampler(0, Default::default(), sampler_config).unwrap();
+        InferenceParameters { sampler }
     }
 }
 
@@ -194,6 +198,10 @@ pub struct SessionConfig {
     pub use_gpu: bool,
     #[pyo3(get)]
     pub gpu_layers: Option<usize>,
+    #[pyo3(get, set)]
+    pub rope_frequency_scale: Option<f32>,
+    #[pyo3(get, set)]
+    pub rope_frequency_base: Option<usize>,
 }
 
 impl Default for SessionConfig {
@@ -207,6 +215,8 @@ impl Default for SessionConfig {
             prefer_mmap: true,
             use_gpu: false,
             gpu_layers: None,
+            rope_frequency_scale: None,
+            rope_frequency_base: None,
         }
     }
 }
@@ -224,6 +234,8 @@ impl SessionConfig {
         prefer_mmap: Option<bool>,
         use_gpu: Option<bool>,
         gpu_layers: Option<usize>,
+        rope_frequency_scale: Option<f32>,
+        rope_frequency_base: Option<usize>,
     ) -> Self {
         SessionConfig {
             threads: threads.unwrap_or(8),
@@ -234,6 +246,8 @@ impl SessionConfig {
             prefer_mmap: prefer_mmap.unwrap_or(true),
             use_gpu: use_gpu.unwrap_or(false),
             gpu_layers,
+            rope_frequency_scale,
+            rope_frequency_base,
         }
     }
 
@@ -247,7 +261,18 @@ impl SessionConfig {
     #[allow(clippy::type_complexity)]
     pub fn __getnewargs__(
         &self,
-    ) -> PyResult<(usize, usize, usize, Precision, Precision, bool, bool, usize)> {
+    ) -> PyResult<(
+        usize,
+        usize,
+        usize,
+        Precision,
+        Precision,
+        bool,
+        bool,
+        usize,
+        f32,
+        usize,
+    )> {
         Ok((
             self.threads,
             self.batch_size,
@@ -257,6 +282,8 @@ impl SessionConfig {
             self.prefer_mmap,
             self.use_gpu,
             self.gpu_layers.unwrap_or(0),
+            self.rope_frequency_scale.unwrap_or(0.0),
+            self.rope_frequency_base.unwrap_or(0),
         ))
     }
 }
@@ -268,6 +295,17 @@ impl SessionConfig {
             memory_v_type: self.values_memory_type.to_llama_rs_memory_type(),
             n_batch: self.batch_size,
             n_threads: self.threads,
+        }
+    }
+
+    pub fn get_rope_overrides(self) -> Option<RoPEOverrides> {
+        if self.rope_frequency_scale.is_some() || self.rope_frequency_base.is_some() {
+            Some(RoPEOverrides {
+                frequency_scale: self.rope_frequency_scale.unwrap_or(1.0),
+                frequency_base: self.rope_frequency_base.unwrap_or(10_000),
+            })
+        } else {
+            None
         }
     }
 }
